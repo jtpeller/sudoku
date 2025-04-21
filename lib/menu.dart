@@ -3,20 +3,10 @@ import 'package:flutter/material.dart';
 import 'game.dart';
 import 'styles.dart';
 
-class MainMenu extends StatefulWidget {
+class MainMenu extends StatelessWidget {
   const MainMenu({super.key, required this.title});
   final String title;
-
-  @override
-  State<MainMenu> createState() => _MainMenuState();
-}
-
-class _MainMenuState extends State<MainMenu> {
   static const Widget verticalSpacer = SizedBox(height: 16);
-
-  void _incrementCounter() {
-    setState(() {});
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,11 +46,6 @@ class _MainMenuState extends State<MainMenu> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
