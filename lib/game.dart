@@ -427,7 +427,7 @@ class _GamePageState extends State<GamePage> {
                           ? constraints.maxWidth
                           : constraints.maxHeight) -
                       50; // Padding to prevent overflow
-                  final double containerSize = gridSize > 500 ? 500 : gridSize;
+                  final double containerSize = gridSize > 500 ? 500 : (gridSize < 300 ? 300 : gridSize);
 
                   return Center(
                     child: ConstrainedBox(
@@ -494,7 +494,10 @@ class _GamePageState extends State<GamePage> {
               ),
               widgets.verticalSpacer,
               // Number input buttons
-              OverflowBar(
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6.0, // Spacing between buttons
+                runSpacing: 6.0, // Spacing between rows of buttons
                 children: List.generate(
                   9,
                   // Spacing between buttons
