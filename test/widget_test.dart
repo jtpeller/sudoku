@@ -16,5 +16,7 @@ void main() {
     await tester.pumpWidget(const SudokuApp());
 
     // TODO: Write test program
+    // Verify that the app starts with the splash screen.
+    expect(find.text('Sudoku Game'), findsOneWidget);
   });
 }

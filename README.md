@@ -25,7 +25,7 @@ This Sudoku game features:
 - Splash screen
 - Main Menu, with title and customized buttons
 - Game page, which has the Sudoku grid and related buttons / etc.
-- Options submenu, which I'm still figuring out how I want to tackle (if at all).
+- Options submenu, with options that influence appearance and the game.
 
 The game itself aims to implement:
 
@@ -35,4 +35,47 @@ The game itself aims to implement:
 
 ## Installation
 
-TODO
+> [!IMPORTANT]
+> Currently, I have only tested with the Web build and the Windows build.
+> Also, don't just build my software and then publish it on another platform / store -- see LICENSE.
+
+The following build instructions are to be used per platform:
+
+- Linux (untested)
+
+  ```sh
+  flutter build linux --release
+  ```
+
+- Windows (tested)
+
+    ```sh
+    flutter build windows --release
+    ```
+
+- macOS (untested)
+
+    ```sh
+    flutter build macos --release
+    ```
+
+- Web (tested, tweaked for GitHub Pages deployment)
+
+    ```sh
+    flutter build web --base-href "/sudoku/" --release
+    ```
+
+- Android (untested)
+
+    ```sh
+    flutter build apk --release
+    # OR, for app store bundle
+    flutter build appbundle --release
+    ```
+
+- iOS (untested)
+
+    ```sh
+    flutter build ipa --release
+    # TODO: probably need something with "export options"
+    ```

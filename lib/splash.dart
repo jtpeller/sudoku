@@ -18,7 +18,7 @@ class SudokuSplash extends StatelessWidget {
           Shadow(color: ThemeColor.getAccentColor(context).withValues(alpha: 0.5), blurRadius: 10),
         ],
       ),
-      nextScreen: MainMenu(title: 'Menu'),
+      nextScreen: MainMenu(),
       duration: 2500,
       backgroundColor: ThemeColor.getBgColor(context),
       splashTransition: SplashTransition.fadeTransition,

@@ -7,7 +7,7 @@ class SudokuGenerator {
   final Random _random = Random();
 
   // Public method to generate a Sudoku puzzle
-  Map<String, dynamic> generateSudoku(String difficulty) {
+  Map<String, dynamic> generateSudoku(String difficulty, {int mode = 0}) {
     _board = List.generate(9, (_) => List.filled(9, 0));
     _solution = List.generate(9, (_) => List.filled(9, 0));
     _isEditable = List.generate(9, (_) => List.filled(9, false));
@@ -15,7 +15,7 @@ class SudokuGenerator {
     _fillBoard(0, 0); // Fill the complete board
     _solution = List.from(_board.map((row) => List.from(row))); // Store the solution
 
-    _removeCells(difficulty); // Remove cells based on difficulty
+    _removeCells(difficulty, mode); // Remove cells based on difficulty
 
     return {'puzzle': _board, 'solution': _solution, 'isEditable': _isEditable};
   }
@@ -73,20 +73,36 @@ class SudokuGenerator {
   }
 
   // Removes cells based on difficulty
-  void _removeCells(String difficulty) {
+  void _removeCells(String difficulty, int mode) {
     int cellsToRemove;
     switch (difficulty.toLowerCase()) {
+      case 'beginner':
+        cellsToRemove = 20;
       case 'easy':
-        cellsToRemove = 35;
+        cellsToRemove = 30;
       case 'medium':
-        cellsToRemove = 45;
+        cellsToRemove = 40;
       case 'hard':
-        cellsToRemove = 55;
+        cellsToRemove = 50;
+      case 'expert':
+        cellsToRemove = 60;
+      case 'impossible':
+        cellsToRemove = 70;
       default:
         // Default to easy
-        cellsToRemove = 35;
+        cellsToRemove = 30;
     }
 
+    // Remove cells based on the mode
+    switch (mode) {
+      case 0: // symmetric
+        _removeSymmetrically(cellsToRemove);
+      case 1: // random
+        _removeRandomly(cellsToRemove);
+    }
+  }
+
+  void _removeRandomly(int cellsToRemove) {
     int removedCount = 0;
     while (removedCount < cellsToRemove) {
       int row = _random.nextInt(9);
@@ -96,6 +112,23 @@ class SudokuGenerator {
         _board[row][col] = 0;
         _isEditable[row][col] = true; // Mark as non-editable
         removedCount++;
+      }
+    }
+  }
+
+  void _removeSymmetrically(int cellsToRemove) {
+    int removedCount = 0;
+    while (removedCount < cellsToRemove) {
+      int row = _random.nextInt(9);
+      int col = _random.nextInt(9);
+
+      // Ensure symmetric removal
+      if (_board[row][col] != 0 && _board[8 - row][8 - col] != 0) {
+        _board[row][col] = 0;
+        _board[8 - row][8 - col] = 0;
+        _isEditable[row][col] = true; // Mark as non-editable
+        _isEditable[8 - row][8 - col] = true; // Mark symmetric cell as non-editable
+        removedCount += 2; // Two cells removed
       }
     }
   }

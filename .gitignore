@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# icon related
+*.xcf
+*store.png
+icon/favicon.png

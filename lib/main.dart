@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'splash.dart';
 import 'styles.dart';
-import 'theme_manager.dart'; // Import the new theme manager
+import 'settings_manager.dart'; // Import the new theme manager
 
 void main() {
   runApp(const SudokuApp());
@@ -17,8 +17,8 @@ class SudokuApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ThemeManager(), // Provide the ThemeManager
-      child: Consumer<ThemeManager>(
+      create: (_) => SettingsManager(), // Provide the ThemeManager
+      child: Consumer<SettingsManager>(
         builder: (context, themeManager, child) {
           return MaterialApp(
             title: 'Sudoku Game',
@@ -28,13 +28,13 @@ class SudokuApp extends StatelessWidget {
               brightness: Brightness.light,
               colorScheme: ColorScheme.fromSeed(
                 brightness: Brightness.light,
-                seedColor: ThemeColor.mainColorLight,
+                seedColor: ThemeColor.primaryLight,
               ),
               appBarTheme: const AppBarTheme(
-                backgroundColor: ThemeColor.bgColorLight,
+                backgroundColor: ThemeColor.bgLight,
                 foregroundColor: ThemeColor.bodyTextLight,
               ),
-              scaffoldBackgroundColor: ThemeColor.bgColorLight,
+              scaffoldBackgroundColor: ThemeColor.bgLight,
               textTheme: TextTheme(
                 bodyLarge: TextStyle(color: ThemeColor.bodyTextLight),
                 bodyMedium: TextStyle(color: ThemeColor.bodyTextLight),
@@ -45,13 +45,13 @@ class SudokuApp extends StatelessWidget {
               brightness: Brightness.dark,
               colorScheme: ColorScheme.fromSeed(
                 brightness: Brightness.dark,
-                seedColor: ThemeColor.mainColorDark,
+                seedColor: ThemeColor.primaryDark,
               ),
               appBarTheme: const AppBarTheme(
-                backgroundColor: ThemeColor.bgColorDark,
+                backgroundColor: ThemeColor.bgDark,
                 foregroundColor: ThemeColor.bodyTextDark,
               ),
-              scaffoldBackgroundColor: ThemeColor.bgColorDark,
+              scaffoldBackgroundColor: ThemeColor.bgDark,
               textTheme: TextTheme(
                 bodyLarge: TextStyle(color: ThemeColor.bodyTextDark),
                 bodyMedium: TextStyle(color: ThemeColor.bodyTextDark),
