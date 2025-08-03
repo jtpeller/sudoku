@@ -2,9 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'splash.dart';
-import 'styles.dart';
-import 'settings_manager.dart'; // Import the new theme manager
+import 'pages/splash.dart';
+import 'theme/styles.dart';
+import 'data/settings_manager.dart'; // Import the new theme manager
 
 void main() {
   runApp(const SudokuApp());
@@ -17,13 +17,13 @@ class SudokuApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => SettingsManager(), // Provide the ThemeManager
+      create: (_) => SettingsManager(),
       child: Consumer<SettingsManager>(
         builder: (context, themeManager, child) {
           return MaterialApp(
             title: 'Sudoku Game',
             debugShowCheckedModeBanner: false,
-            themeMode: themeManager.themeMode, // Use themeMode from manager
+            themeMode: themeManager.themeMode,
             theme: ThemeData(
               brightness: Brightness.light,
               colorScheme: ColorScheme.fromSeed(

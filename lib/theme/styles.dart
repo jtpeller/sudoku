@@ -135,7 +135,7 @@ abstract class ThemeStyle {
     return TextStyle(
       fontFamily: fontFamily,
       color: ThemeColor.getBodyText(context),
-      fontSize: 50,
+      fontSize: 36,
       height: 1.5,
       fontWeight: FontWeight.w600,
     );
@@ -171,13 +171,35 @@ abstract class ThemeStyle {
     );
   }
 
+  static TextStyle tinyText(BuildContext context) {
+    return TextStyle(
+      fontFamily: fontFamily,
+      color: ThemeColor.getBodyText(context),
+      fontSize: 16,
+      height: 1.0,
+      fontWeight: FontWeight.w200,
+    );
+  }
+
   static TextStyle option(BuildContext context) {
     return TextStyle(
       fontFamily: fontFamily,
       color: ThemeColor.getBodyText(context),
-      fontSize: 24,
-      height: 1.5,
+      fontSize: 20,
+      height: 1.0,
+      fontWeight: FontWeight.w400,
+    );
+  }
+  
+  /// Italicized text style for options
+  static TextStyle helperText(BuildContext context) {
+    return TextStyle(
+      fontFamily: fontFamily,
+      color: ThemeColor.getBodyText(context),
+      fontSize: 18,
+      height: 1.0,
       fontWeight: FontWeight.w200,
+      fontStyle: FontStyle.italic,
     );
   }
 
@@ -195,7 +217,7 @@ abstract class ThemeStyle {
     return TextStyle(
       fontFamily: fontFamily,
       color: ThemeColor.getBodyText(context),
-      fontSize: 25,
+      fontSize: 20,
       height: 1,
       fontWeight: FontWeight.w500,
     );
@@ -221,16 +243,23 @@ abstract class ThemeStyle {
     );
   }
 
+  // style for number buttons
+  static TextStyle numberButtonText(BuildContext context) {
+    return fixedGridText(context).copyWith(
+      color: ThemeColor.getBodyText(context),
+    );
+  }
+
   static OutlinedButtonThemeData menuButtonThemeData(BuildContext context, String diff) {
     Color color = ThemeColor.getButtonColor(context, diff);
     return OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        minimumSize: Size(300.0, 50.0),
+        minimumSize: Size(300.0, 30.0),
         foregroundColor: color,
         backgroundColor: ThemeColor.transparent,
         shadowColor: ThemeColor.getBoxShadowColor(context),
         textStyle: buttonText(context),
-        padding: EdgeInsets.all(25),
+        padding: EdgeInsets.all(20),
         side: BorderSide(color: color),
       ),
     );
@@ -256,7 +285,7 @@ abstract class ThemeStyle {
         fixedSize: Size(50.0, 50.0),
         foregroundColor: ThemeColor.getBodyText(context),
         padding: EdgeInsets.all(0),
-        shape: CircleBorder(),
+        //shape: CircleBorder(),
         side: BorderSide(color: ThemeColor.getBorderColor(context)),
         textStyle: buttonText(context),
       ),

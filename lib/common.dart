@@ -1,1 +1,0 @@
-enum GenerationMode { symmetrical, random }

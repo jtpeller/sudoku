@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 
 import 'game.dart';
-import 'styles.dart';
-import 'widgets.dart' as widgets;
+import '../widgets/spacing.dart' as spacing;
+import '../theme/styles.dart';
 import 'options.dart';
 
 class MainMenu extends StatelessWidget {
@@ -13,8 +13,9 @@ class MainMenu extends StatelessWidget {
   Column buildMenu(BuildContext context) {
     // begin the menu items list with title + spacer.
     List<Widget> menuItems = [];
-    menuItems.add(widgets.massiveVerticalSpacer);
+    menuItems.add(spacing.massiveVerticalSpacer);
     menuItems.add(Text('Sudoku', style: ThemeStyle.gameTitle(context)));
+    menuItems.add(spacing.verticalSpacer);
 
     // extract style for recoloring
     for (var diff in difficulties) {
@@ -32,7 +33,7 @@ class MainMenu extends StatelessWidget {
       );
 
       // add the spacer in between
-      menuItems.add(widgets.verticalSpacer);
+      menuItems.add(spacing.verticalSpacer);
     }
 
     // add options button (and spacer)
@@ -45,7 +46,7 @@ class MainMenu extends StatelessWidget {
         child: const Text('Options'),
       ),
     );
-    menuItems.add(widgets.massiveVerticalSpacer);
+    menuItems.add(spacing.massiveVerticalSpacer);
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -57,7 +58,10 @@ class MainMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Main Menu')),
+      appBar: AppBar(
+        title: const Text('Main Menu'),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
         child: SizedBox(
           // get full width of the screen

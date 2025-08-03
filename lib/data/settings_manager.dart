@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'common.dart';
+
+enum GenerationMode { symmetrical, random }
+
 
 class SettingsManager extends ChangeNotifier {
   ////////////////////////
@@ -15,7 +17,7 @@ class SettingsManager extends ChangeNotifier {
   GenerationMode get generationMode => _generationMode;
 
   // lazy mode
-  bool _lazyMode = false; // Default to not lazy mode
+  bool _lazyMode = true; // Default to lazy mode
   bool get lazyMode => _lazyMode;
 
   /////////////////////////////

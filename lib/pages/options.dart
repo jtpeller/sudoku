@@ -2,37 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'common.dart';
-import 'settings_manager.dart';
-import 'styles.dart';
-import 'widgets.dart' as widgets;
+import '../data/settings_manager.dart';
+import '../widgets/spacing.dart' as spacing;
+import '../theme/styles.dart';
+import '../widgets/option_widgets.dart' as widgets;
 
 class OptionsPage extends StatelessWidget {
   const OptionsPage({super.key});
-
-  Row buildIconToggleOption(
-    SettingsManager mgr,
-    BuildContext context,
-    String name,
-    bool toggleCondition,
-    String msg,
-    Map<Icon, String> iconToggle,
-  ) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        widgets.HelperText(text: name, helperText: msg),
-        IconButton(
-          icon: toggleCondition ? iconToggle.keys.first : iconToggle.keys.last,
-          onPressed: () {
-            mgr.toggleTheme();
-          },
-          tooltip: toggleCondition ? iconToggle.values.first : iconToggle.values.last,
-          iconSize: ThemeStyle.option(context).fontSize! * 1.25,
-        ),
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +19,7 @@ class OptionsPage extends StatelessWidget {
       body: Center(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final double minSize = 500.0;
+            final double minSize = 350.0;
             final double maxWidth = 1000;
             final double targetSize = constraints.maxWidth * 0.9;
             //(constraints.maxWidth < constraints.maxHeight
@@ -53,8 +29,7 @@ class OptionsPage extends StatelessWidget {
             final double containerSize =
                 targetSize > maxWidth ? maxWidth : (targetSize < minSize ? minSize : targetSize);
 
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            return widgets.DualScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   minWidth: minSize,
@@ -68,28 +43,31 @@ class OptionsPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Appearance', style: ThemeStyle.subtitle(context)),
-                      widgets.smallVerticalSpacer,
-                      widgets.buildDivider(context),
-                      widgets.verticalSpacer,
-                      buildIconToggleOption(
-                        mgr,
-                        context,
-                        'Dark Mode',
-                        mgr.themeMode == ThemeMode.dark,
-                        'Toggles the theme between dark and light mode.',
-                        {
+                      spacing.smallVerticalSpacer,
+                      spacing.buildDivider(context),
+                      spacing.verticalSpacer,
+                      widgets.IconOption(
+                        name: 'Theme Mode',
+                        helpText: 'Toggles between dark and light mode.',
+                        iconToggle: {
                           Icon(Icons.light_mode_outlined): 'Light Mode',
                           Icon(Icons.dark_mode_outlined): 'Dark Mode',
                         },
+                        toggleCondition: mgr.themeMode == ThemeMode.dark,
+                        onPressed: () {
+                          mgr.toggleTheme();
+                        },
                       ),
-                      widgets.bigVerticalSpacer,
+                      spacing.bigVerticalSpacer,
                       Text('Game', style: ThemeStyle.subtitle(context)),
-                      widgets.smallVerticalSpacer,
-                      widgets.buildDivider(context),
-                      widgets.verticalSpacer,
+                      spacing.smallVerticalSpacer,
+                      spacing.buildDivider(context),
+                      spacing.verticalSpacer,
                       widgets.DropdownOption(
                         label: 'Generation Style',
-                        helpText: 'Symmetric mode is prettier, Random is more chaotic.',
+                        helpText: 'Influences how the empty cells are laid out.\n\n'
+                          'Symmetric: Empty cells are "reflected" across the sudoku grid for symmetry.\n\n'
+                          'Random: Empty cells are randomly chosen.',
                         currentValue: mgr.generationMode,
                         values: const [GenerationMode.symmetrical, GenerationMode.random],
                         options: const ['Symmetrical', 'Random'],
@@ -99,10 +77,12 @@ class OptionsPage extends StatelessWidget {
                           }
                         },
                       ),
-                      widgets.verticalSpacer,
+                      spacing.verticalSpacer,
+                      spacing.buildThinDivider(context),
+                      spacing.verticalSpacer,
                       widgets.SwitchOption(
                         label: 'Lazy Mode',
-                        helpText: 'When enabled, selected cell moves to next empty cell, but only if what you just entered was correct (includes hints). Skip cells by just choosing another.',
+                        helpText: "Upon input, moves the selected cell to the next non-correct cell, so you don't have to!",
                         value: mgr.lazyMode, 
                         onChanged: (bool newValue) {
                           mgr.setLazyMode(newValue);
