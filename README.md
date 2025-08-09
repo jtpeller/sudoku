@@ -26,12 +26,15 @@ This Sudoku game features:
 - Main Menu, with title and customized buttons
 - Game page, which has the Sudoku grid and related buttons / etc.
 - Options submenu, with options that influence appearance and the game.
+- Candidate and normal modes
+- Auto-candidate mode, which fills in valid candidates for you.
 
 The game itself aims to implement:
 
-- Candidate / normal mode (for placing numbers)
-- Auto-candidate mode (the "hint" mode, which will do the work of elimination for you).
 - Super-auto-candidate mode. This is like auto-candidate mode, except it goes an extra-step to eliminate further (say, highlighting numbers that can clearly be a different value, eliminate numbers since it can only be a certain row/column in another box, etc.)
+- Timer
+- Stats?
+- Achievements for Android and iOS?
 
 ## Installation
 

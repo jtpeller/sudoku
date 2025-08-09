@@ -88,6 +88,17 @@ class OptionsPage extends StatelessWidget {
                           mgr.setLazyMode(newValue);
                         },
                       ),
+                      spacing.verticalSpacer,
+                      spacing.buildThinDivider(context),
+                      spacing.verticalSpacer,
+                      widgets.SwitchOption(
+                        label: 'Auto-Candidate Mode',
+                        helpText: 'Automatically fills in candidates for you.',
+                        value: mgr.autoCandidateMode,
+                        onChanged: (bool newValue) {
+                          mgr.setAutoCandidateMode(newValue);
+                        },
+                      )
                     ],
                   ),
                 ),

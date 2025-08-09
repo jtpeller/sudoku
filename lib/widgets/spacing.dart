@@ -17,13 +17,13 @@ const Widget massiveHorizontalSpacer = SizedBox(width: 64);
 
 // dividers and lines
 Divider buildDivider(BuildContext context) {
-  return Divider(color: ThemeColor.getBodyText(context), thickness: 1.0);
+  return Divider(color: ThemeColor.getTextBodyColor(context), thickness: 1.0);
 }
 
 Divider buildThickDivider(BuildContext context) {
-  return Divider(color: ThemeColor.getBodyText(context), thickness: 3.0);
+  return Divider(color: ThemeColor.getTextBodyColor(context), thickness: 3.0);
 }
 
 Divider buildThinDivider(BuildContext context) {
-  return Divider(color: ThemeColor.getBodyText(context), thickness: 0.5);
+  return Divider(color: ThemeColor.getTextBodyColor(context), thickness: 0.5);
 }

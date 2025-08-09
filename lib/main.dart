@@ -28,16 +28,16 @@ class SudokuApp extends StatelessWidget {
               brightness: Brightness.light,
               colorScheme: ColorScheme.fromSeed(
                 brightness: Brightness.light,
-                seedColor: ThemeColor.primaryLight,
+                seedColor: ThemeColor.accentLite,
               ),
               appBarTheme: const AppBarTheme(
-                backgroundColor: ThemeColor.bgLight,
-                foregroundColor: ThemeColor.bodyTextLight,
+                backgroundColor: ThemeColor.bgLite,
+                foregroundColor: ThemeColor.textBodyLite,
               ),
-              scaffoldBackgroundColor: ThemeColor.bgLight,
+              scaffoldBackgroundColor: ThemeColor.bgLite,
               textTheme: TextTheme(
-                bodyLarge: TextStyle(color: ThemeColor.bodyTextLight),
-                bodyMedium: TextStyle(color: ThemeColor.bodyTextLight),
+                bodyLarge: TextStyle(color: ThemeColor.textBodyLite),
+                bodyMedium: TextStyle(color: ThemeColor.textBodyLite),
                 // Add more text styles if needed
               ),
             ),
@@ -45,7 +45,7 @@ class SudokuApp extends StatelessWidget {
               brightness: Brightness.dark,
               colorScheme: ColorScheme.fromSeed(
                 brightness: Brightness.dark,
-                seedColor: ThemeColor.primaryDark,
+                seedColor: ThemeColor.accentDark,
               ),
               appBarTheme: const AppBarTheme(
                 backgroundColor: ThemeColor.bgDark,

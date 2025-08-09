@@ -2,7 +2,7 @@ import 'dart:math';
 
 class SudokuGenerator {
   late List<List<int>> _board;
-  late List<List<dynamic>> _solution;
+  late List<List<int>> _solution;
   late List<List<bool>> _isEditable;
   final Random _random = Random();
 
@@ -13,11 +13,54 @@ class SudokuGenerator {
     _isEditable = List.generate(9, (_) => List.filled(9, false));
 
     _fillBoard(0, 0); // Fill the complete board
-    _solution = List.from(_board.map((row) => List.from(row))); // Store the solution
+    _solution = List.from(_board.map((row) => List<int>.from(row))); // Store the solution
 
     _removeCells(difficulty, mode); // Remove cells based on difficulty
 
     return {'puzzle': _board, 'solution': _solution, 'isEditable': _isEditable};
+  }
+
+  // Public method to compute candidates for a given Sudoku board
+  static List<List<Set<int>>> computeCandidates(List<List<int>> puzzle, List<List<int>> solution) {
+    List<List<Set<int>>> candidates = List.generate(9, (_) => List.generate(9, (_) => <int>{}));
+    for (int row = 0; row < 9; row++) {
+      for (int col = 0; col < 9; col++) {
+        if (puzzle[row][col] == 0) {
+          candidates[row][col] = _getCandidates(puzzle, row, col);
+        } else {
+          candidates[row][col] = {puzzle[row][col]}; // Fixed numbers are their own candidates
+        }
+      }
+    }
+    return candidates;
+  }
+
+  // Helper method to get candidates for a specific cell
+  static Set<int> _getCandidates(List<List<int>> puzzle, int row, int col) {
+    Set<int> candidates = Set.from(List.generate(9, (index) => index + 1));
+    // Remove candidates based on row
+    for (int x = 0; x < 9; x++) {
+      if (puzzle[row][x] != 0) {
+        candidates.remove(puzzle[row][x]);
+      }
+    }
+    // Remove candidates based on column
+    for (int x = 0; x < 9; x++) {
+      if (puzzle[x][col] != 0) {
+        candidates.remove(puzzle[x][col]);
+      }
+    }
+    // Remove candidates based on 3x3 box
+    int startRow = row - row % 3;
+    int startCol = col - col % 3;
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        if (puzzle[i + startRow][j + startCol] != 0) {
+          candidates.remove(puzzle[i + startRow][j + startCol]);
+        }
+      }
+    }
+    return candidates;
   }
 
   // Recursive backtracking function to fill the 9x9 Sudoku board

@@ -31,13 +31,16 @@ class _GamePageState extends State<GamePage> {
   late String _difficulty;
   // Initialize with empty boards to prevent LateInitializationError
   List<List<int>> _puzzleBoard = List.generate(9, (_) => List.filled(9, 0));
-  List<List<dynamic>> _solutionBoard = List.generate(9, (_) => List.filled(9, 0));
+  List<List<int>> _solutionBoard = List.generate(9, (_) => List.filled(9, 0));
   List<List<bool>> _isEditable = List.generate(9, (_) => List.filled(9, false));
   List<List<bool>> _isHinted = List.generate(9, (_) => List.filled(9, false));
   List<int> _numbersCount = List.filled(9, 0);
+  List<List<Set<int>>> _candidateBoard = List.generate(9, (_) => List.generate(9, (_) => <int>{}));
+  bool _isCandidateMode = false;
 
   int? _selectedRow; // Currently selected cell row
   int? _selectedCol; // Currently selected cell column
+  int? _selectedValue; // Currently selected cell value
   int _hintsUsed = 0; // Counter for hints used
   int _mistakes = 0; // Counter for mistakes made
 
@@ -83,15 +86,19 @@ class _GamePageState extends State<GamePage> {
         }
       }
     }
+
     setState(() {
       _puzzleBoard = clearedBoard; // Update the puzzle board
+      _candidateBoard = List.generate(9, (_) => List.generate(9, (_) => <int>{}));
       _isHinted = List.generate(9, (_) => List.filled(9, false)); // Reset hints
       _numbersCount = _initNumbersCount(); // Reset numbers count
       _hintsUsed = 0; // Reset hints used counter
       _mistakes = 0; // Reset mistakes counter
       _selectedRow = null; // Reset selection
       _selectedCol = null; // Reset selection
+      _selectedValue = null; // Reset selected value
     });
+
     // Show a message indicating the puzzle has been cleared
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -140,10 +147,10 @@ class _GamePageState extends State<GamePage> {
         context,
         'Congratulations!',
         'You solved an $_difficulty Sudoku puzzle!\n'
-          "Here's your stats:\n"
-          '> $hintMsg'
-          '> $mistakeMsg'
-          '$perfect',
+            "Here's your stats:\n"
+            '> $hintMsg'
+            '> $mistakeMsg'
+            '$perfect',
         () {
           Navigator.of(context).pop();
           _generateNewPuzzle(
@@ -183,10 +190,7 @@ class _GamePageState extends State<GamePage> {
 
         return Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minWidth: minWidth,
-              maxWidth: containerSize,
-            ),
+            constraints: BoxConstraints(minWidth: minWidth, maxWidth: containerSize),
             child: GridView.count(
               crossAxisCount: 5, // 5 buttons per row
               crossAxisSpacing: 0.0,
@@ -213,9 +217,9 @@ class _GamePageState extends State<GamePage> {
                     style: OutlinedButton.styleFrom(
                       backgroundColor:
                           isFull
-                              ? ThemeColor.getCorrectColor(context)
-                              : ThemeColor.getBgColorLite(context),
-                      foregroundColor: ThemeColor.getBodyText(context),
+                              ? ThemeColor.getCellCorrectColor(context)
+                              : ThemeColor.getCellAccentColor(context),
+                      foregroundColor: ThemeColor.getTextBodyColor(context),
                       padding: EdgeInsets.all(0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(0.0),
@@ -224,13 +228,17 @@ class _GamePageState extends State<GamePage> {
                       textStyle: ThemeStyle.numberButtonText(context),
                     ),
                     child: Center(
-                      child: num == 'X'
-                        ? Icon(Icons.clear, size: ThemeStyle.numberButtonText(context).fontSize! * 1.2)
-                        : Text(
-                            num,
-                            style: ThemeStyle.numberButtonText(context),
-                            textAlign: TextAlign.center,
-                          ),
+                      child:
+                          num == 'X'
+                              ? Icon(
+                                Icons.clear,
+                                size: ThemeStyle.numberButtonText(context).fontSize! * 1.2,
+                              )
+                              : Text(
+                                num,
+                                style: _isCandidateMode ? ThemeStyle.candidateText(context) : ThemeStyle.numberButtonText(context),
+                                textAlign: TextAlign.center,
+                              ),
                     ),
                   ),
                 );
@@ -244,6 +252,13 @@ class _GamePageState extends State<GamePage> {
 
   /// Builds the Sudoku grid using a [GridView.builder].
   Widget _buildSudokuGrid() {
+    // decide whether to compute candidates
+    final computeCandidates = context.read<SettingsManager>().autoCandidateMode;
+    if (computeCandidates) {
+      // compute candidates for the current puzzle
+      _candidateBoard = SudokuGenerator.computeCandidates(_puzzleBoard, _solutionBoard);
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final double gridSize =
@@ -275,39 +290,33 @@ class _GamePageState extends State<GamePage> {
               itemBuilder: (context, index) {
                 int row = index ~/ 9;
                 int col = index % 9;
-                String cellValue =
-                    _puzzleBoard[row][col] == 0 ? '' : _puzzleBoard[row][col].toString();
+                int currentBoxRow = row ~/ 3;
+                int currentBoxCol = col ~/ 3;
+                bool highlighted =
+                    _selectedRow != null &&
+                    _selectedCol != null &&
+                    (row == _selectedRow ||
+                        col == _selectedCol ||
+                        (_selectedRow! ~/ 3 == currentBoxRow &&
+                            _selectedCol! ~/ 3 == currentBoxCol));
 
-                return GestureDetector(
+                return widgets.SudokuTile(
+                  row: row,
+                  col: col,
+                  value: _puzzleBoard[row][col],
+                  candidates: _candidateBoard[row][col],
+                  isSelected: (_selectedRow == row && _selectedCol == col),
+                  isFixed: !_isEditable[row][col],
+                  isIncorrect:
+                      _puzzleBoard[row][col] != _solutionBoard[row][col] &&
+                      _puzzleBoard[row][col] != 0,
+                  isCorrect:
+                      _puzzleBoard[row][col] == _solutionBoard[row][col] && _isEditable[row][col],
+                  isHinted: _isHinted[row][col],
+                  isValueSelected:
+                      _puzzleBoard[row][col] == _selectedValue && _puzzleBoard[row][col] != 0,
+                  isHighlighted: highlighted,
                   onTap: () => _onCellTap(row, col),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        left: _getBorderSide(row, col, context, 'left'),
-                        top: _getBorderSide(row, col, context, 'top'),
-                        right: _getBorderSide(row, col, context, 'right'),
-                        bottom: _getBorderSide(row, col, context, 'bottom'),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: ThemeColor.getBoxShadowColor(context),
-                          blurRadius: 1.0,
-                          offset: Offset(0, 0),
-                          blurStyle: BlurStyle.solid,
-                        ),
-                      ],
-                      color: _getCellColor(row, col, context),
-                    ),
-                    child: Center(
-                      child: Text(
-                        cellValue,
-                        style:
-                            _isEditable[row][col]
-                                ? ThemeStyle.gridText(context)
-                                : ThemeStyle.fixedGridText(context),
-                      ),
-                    ),
-                  ),
                 );
               },
             ),
@@ -317,87 +326,8 @@ class _GamePageState extends State<GamePage> {
     );
   }
 
-  ///////////////////////////
-  ///    GETTER METHODS   ///
-  ///////////////////////////
-
-  /// Returns the color for a Sudoku grid cell at the specified [row] and [col].
-  ///
-  /// If the cell is currently selected (matches [_selectedRow] and [_selectedCol]),
-  /// it returns the accent color to highlight the cell. Otherwise, it alternates
-  /// between two background colors for visual distinction of 3x3 subgrids.
-  ///
-  /// Parameters:
-  /// - [row]: The row index of the cell.
-  /// - [col]: The column index of the cell.
-  /// - [context]: The build context used to retrieve theme colors.
-  ///
-  /// Returns a [Color] representing the cell's background.
-  Color _getCellColor(int row, int col, BuildContext context) {
-    // these first rules override the highlighted colors
-
-    // if the cell's value is incorrect, use the Theme's wrong color
-    if (_puzzleBoard[row][col] != _solutionBoard[row][col] && _puzzleBoard[row][col] != 0) {
-      return ThemeColor.getWrongColor(context);
-    }
-
-    // if this was a hint cell, use the hint color
-    if (_isHinted[row][col]) {
-      return ThemeColor.getHintColor(context);
-    }
-
-    // if the cell's value is correct (and not fixed), use the Theme's correct color
-    if (_puzzleBoard[row][col] == _solutionBoard[row][col] && _isEditable[row][col]) {
-      return ThemeColor.getCorrectColor(context);
-    }
-
-    // if this is the selected cell, highlight it
-    if (_selectedRow == row && _selectedCol == col) {
-      return ThemeColor.getAccentColor(context); // Highlight selected cell
-    }
-
-    // if not, highlight cells in the same row, column, or 3x3 block as selected
-    if (_selectedRow != null && _selectedCol != null) {
-      // Highlight row / col
-      if (row == _selectedRow || col == _selectedCol) {
-        return ThemeColor.getBgColorHigh(context);
-      }
-
-      // Highlight the box
-      int selectedBoxRow = _selectedRow! ~/ 3;
-      int selectedBoxCol = _selectedCol! ~/ 3;
-      int currentBoxRow = row ~/ 3;
-      int currentBoxCol = col ~/ 3;
-      if (selectedBoxRow == currentBoxRow && selectedBoxCol == currentBoxCol) {
-        return ThemeColor.getBgColorHigh(context);
-      }
-    }
-
-    // Alternate colors for the grid cells
-    return ((row ~/ 3) + (col ~/ 3)) % 2 == 0
-        ? ThemeColor.getBgColor(context)
-        : ThemeColor.getBgColorLite(context);
-  }
-
-  /// Returns the border side for a Sudoku grid cell at the specified [row] x [col] and [side].
-  BorderSide _getBorderSide(row, col, context, side) {
-    double width = ThemeStyle.gridNormalBorder;
-    // if this is an edge of the 3x3 block, use a thicker border
-    if ((col > 0 && col % 3 == 0 && side == 'left') ||
-        (row > 0 && row % 3 == 0 && side == 'top') ||
-        (col < 8 && col % 3 == 2 && side == 'right') ||
-        (row < 8 && row % 3 == 2 && side == 'bottom')) {
-      width = ThemeStyle.gridThickBorder;
-    }
-    return BorderSide(
-      color: ThemeColor.getBorderColor(context),
-      width: width,
-      style: BorderStyle.solid,
-    );
-  }
-
   /// returns the help text as a scrollable rich text widget.
-  Widget _getHelpText(BuildContext context) {
+  Widget _buildHelpText(BuildContext context) {
     return SingleChildScrollView(
       child: RichText(
         text: TextSpan(
@@ -440,8 +370,31 @@ class _GamePageState extends State<GamePage> {
     );
   }
 
-  /// returns the congratulations text as a scrollable rich text widget.
-  /// 
+  Widget _buildCandidateModeToggleButton() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _isCandidateMode = false; // Toggle candidate mode
+            });
+          },
+          style: ThemeStyle.candidateButtonThemeData(context, !_isCandidateMode).style,
+          child: Text('Normal', style: ThemeStyle.buttonText(context)),
+        ),
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _isCandidateMode = true; // Toggle candidate mode
+            });
+          },
+          style: ThemeStyle.candidateButtonThemeData(context, _isCandidateMode).style,
+          child: Text('Candidate', style: ThemeStyle.buttonText(context)),
+        ),
+      ],
+    );
+  }
 
   ///////////////////////////
   ///    EVENT HANDLERS   ///
@@ -457,12 +410,14 @@ class _GamePageState extends State<GamePage> {
       setState(() {
         _selectedRow = row;
         _selectedCol = col;
+        _selectedValue = _puzzleBoard[row][col];
       });
     } else {
       // not editable (this is a fixed cell). Deselect.
       setState(() {
         _selectedRow = null;
         _selectedCol = null;
+        _selectedValue = null;
       });
     }
   }
@@ -477,9 +432,24 @@ class _GamePageState extends State<GamePage> {
 
     // check if a cell is selected and it is editable
     if (_selectedRow != null && _selectedCol != null && _isEditable[_selectedRow!][_selectedCol!]) {
-      setState(() {
-        _puzzleBoard[_selectedRow!][_selectedCol!] = number;
-      });
+      if (_isCandidateMode) {
+        // set state for candidate mode
+        setState(() {
+          // toggle the candidate number in the candidate board
+          if (_candidateBoard[_selectedRow!][_selectedCol!].contains(number)) {
+            _candidateBoard[_selectedRow!][_selectedCol!].remove(number);
+          } else {
+            _candidateBoard[_selectedRow!][_selectedCol!].add(number);
+          }
+        });
+        return; // no need to continue, candidates are handled separately
+      } else {
+        // set state for number mode
+        setState(() {
+          _puzzleBoard[_selectedRow!][_selectedCol!] = number;
+          _selectedValue = number; // Update selected value
+        });
+      }
 
       // Check if the entered number matches the solution
       if (number != _solutionBoard[_selectedRow!][_selectedCol!] && number != original) {
@@ -566,6 +536,14 @@ class _GamePageState extends State<GamePage> {
       return;
     }
 
+    if (_isCandidateMode) {
+      // clear candidates for the selected cell
+      setState(() {
+        _candidateBoard[_selectedRow!][_selectedCol!] = <int>{}; // Clear candidates
+      });
+      return; // no need to continue.
+    }
+
     // disable clearing if the cell is already correct or hinted
     // an isHinted check is redundant, the cell would be correct anyway
     if (_puzzleBoard[_selectedRow!][_selectedCol!] ==
@@ -619,6 +597,16 @@ class _GamePageState extends State<GamePage> {
         }
       }
     }
+
+    // if a cell cannot be found, start at 0 and wrap around to the selected cell
+    for (int r = 0; r < _selectedRow!; r++) {
+      for (int c = 0; c < _selectedCol!; c++) {
+        if (_isEditable[r][c] && _puzzleBoard[r][c] != _solutionBoard[r][c]) {
+          _onCellTap(r, c);
+          return;
+        }
+      }
+    }
   }
 
   /// Updates the count of how many times a number has been entered in the puzzle.
@@ -657,12 +645,14 @@ class _GamePageState extends State<GamePage> {
               //Text(, style: ThemeStyle.subtitle(context)),
               Text(
                 '$_difficulty | Hints: $_hintsUsed | Mistakes: $_mistakes',
-                style: ThemeStyle.smallGameText(context),
+                style: ThemeStyle.mediumGameText(context),
               ),
-              spacing.verticalSpacer,
+              spacing.smallVerticalSpacer,
               // Game buttons (hint, settings, etc.)
               Wrap(
                 alignment: WrapAlignment.center,
+                spacing: 8.0,
+                runSpacing: 8.0,
                 children: <Widget>[
                   // New Game button
                   widgets.TooltipIconButton(
@@ -701,7 +691,8 @@ class _GamePageState extends State<GamePage> {
                   widgets.TooltipIconButton(
                     icon: Icons.help_outline,
                     label: 'Help',
-                    onPressed: () => widgets.showInfoDialog(context, 'Help', _getHelpText(context)),
+                    onPressed:
+                        () => widgets.showInfoDialog(context, 'Help', _buildHelpText(context)),
                   ),
                   // Hint button
                   widgets.TooltipIconButton(
@@ -724,8 +715,10 @@ class _GamePageState extends State<GamePage> {
               ),
               // Grid
               _buildSudokuGrid(),
-              // TODO: add a button to toggle between candidate and number input modes
-              spacing.verticalSpacer,
+              // Candidate mode toggle button
+              spacing.smallVerticalSpacer,
+              _buildCandidateModeToggleButton(),
+              spacing.smallVerticalSpacer,
               // Number input buttons
               _buildNumberButtons(),
               spacing.massiveVerticalSpacer, // Additional space at the bottom

@@ -165,10 +165,10 @@ class DropdownOption<T> extends StatelessWidget {
         dropdownColor: ThemeColor.getAccentColor(context),
         isExpanded: false,
         padding: EdgeInsets.all(2.0),
-        underline: Container(height: 1.0, color: ThemeColor.getBodyText(context)),
+        underline: Container(height: 1.0, color: ThemeColor.getTextBodyColor(context)),
         // modify to make it more appealing and compact
         alignment: Alignment.center,
-        icon: Icon(Icons.arrow_drop_down_rounded, color: ThemeColor.getBodyText(context)),
+        icon: Icon(Icons.arrow_drop_down_rounded, color: ThemeColor.getTextBodyColor(context)),
         // icon size should be based on the text size
         iconSize: ThemeStyle.option(context).fontSize! * 1.0,
         borderRadius: BorderRadius.circular(4.0),

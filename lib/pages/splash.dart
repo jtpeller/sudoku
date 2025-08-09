@@ -12,10 +12,13 @@ class SudokuSplash extends StatelessWidget {
     return AnimatedSplashScreen(
       splash: Icon(
         Icons.grid_3x3_rounded,
-        color: ThemeColor.getBodyText(context),
+        color: ThemeColor.getTextBodyColor(context),
         size: 100,
         shadows: [
-          Shadow(color: ThemeColor.getAccentColor(context).withValues(alpha: 0.5), blurRadius: 10),
+          Shadow(
+            color: ThemeColor.getAccentColor(context),
+            blurRadius: 10
+          ),
         ],
       ),
       nextScreen: MainMenu(),

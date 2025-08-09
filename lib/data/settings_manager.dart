@@ -20,6 +20,10 @@ class SettingsManager extends ChangeNotifier {
   bool _lazyMode = true; // Default to lazy mode
   bool get lazyMode => _lazyMode;
 
+  // auto candidate mode
+  bool _autoCandidateMode = true; // Default to auto candidate mode
+  bool get autoCandidateMode => _autoCandidateMode;
+
   /////////////////////////////
   ///    MANAGER METHODS    ///
   /////////////////////////////
@@ -36,6 +40,11 @@ class SettingsManager extends ChangeNotifier {
 
   void setLazyMode(bool value) {
     _lazyMode = value;
+    notifyListeners();
+  }
+
+  void setAutoCandidateMode(bool value) {
+    _autoCandidateMode = value;
     notifyListeners();
   }
 }
