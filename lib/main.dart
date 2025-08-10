@@ -49,12 +49,12 @@ class SudokuApp extends StatelessWidget {
               ),
               appBarTheme: const AppBarTheme(
                 backgroundColor: ThemeColor.bgDark,
-                foregroundColor: ThemeColor.bodyTextDark,
+                foregroundColor: ThemeColor.textBodyDark,
               ),
               scaffoldBackgroundColor: ThemeColor.bgDark,
               textTheme: TextTheme(
-                bodyLarge: TextStyle(color: ThemeColor.bodyTextDark),
-                bodyMedium: TextStyle(color: ThemeColor.bodyTextDark),
+                bodyLarge: TextStyle(color: ThemeColor.textBodyDark),
+                bodyMedium: TextStyle(color: ThemeColor.textBodyDark),
                 // Add more text styles if needed
               ),
             ),

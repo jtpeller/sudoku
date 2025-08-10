@@ -5,7 +5,7 @@ class ThemeColor {
   /////////////////////////////////
   ///      COLORS BY THEME      ///
   /////////////////////////////////
-  
+
   /// Dark mode colors
   // ... background colors
   static const Color accentDark = Color.fromARGB(255, 0, 89, 255);
@@ -24,8 +24,9 @@ class ThemeColor {
   static const Color cellValueSelectedDark = Color.fromARGB(255, 165, 82, 5);
 
   // ... text colors
-  static const Color bodyTextDark = Color.fromARGB(255, 228, 228, 228);
-  static const Color fixedTextDark = Color.fromARGB(255, 24, 255, 205);
+  static const Color textBodyDark = Color.fromARGB(255, 228, 228, 228);
+  static const Color textFixedDark = Color.fromARGB(255, 24, 255, 205);
+  static const Color textCandidateDark = Color.fromARGB(255, 185, 185, 185);
 
   // ... border and shadow colors
   static const Color borderDark = Color.fromARGB(255, 131, 131, 131);
@@ -46,10 +47,11 @@ class ThemeColor {
   static const Color cellHintLite = Color.fromARGB(255, 226, 236, 78);
   static const Color cellWrongLite = Color.fromARGB(255, 228, 39, 39);
   static const Color cellValueSelectedLite = Color.fromARGB(255, 255, 150, 52);
-  
+
   // ... text colors
   static const Color textBodyLite = Color.fromARGB(255, 30, 30, 30);
   static const Color textFixedLite = Color.fromARGB(255, 35, 39, 37);
+  static const Color textCandidateLite = Color.fromARGB(255, 87, 87, 87);
 
   // ... border and shadow colors
   static const Color borderLite = Color.fromARGB(255, 140, 140, 140);
@@ -63,7 +65,7 @@ class ThemeColor {
   /////////////////////////////////
   ///   COLOR GETTERS (THEME)   ///
   /////////////////////////////////
-  
+
   /// background colors
   static Color getAccentColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark ? accentDark : accentLite;
@@ -88,7 +90,9 @@ class ThemeColor {
   }
 
   static Color getCellSelectedColor(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark ? cellSelectedDark : cellValueSelectedLite;
+    return Theme.of(context).brightness == Brightness.dark
+        ? cellSelectedDark
+        : cellValueSelectedLite;
   }
 
   static Color getCellCorrectColor(BuildContext context) {
@@ -102,7 +106,7 @@ class ThemeColor {
   static Color getCellWrongColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark ? cellWrongDark : cellWrongLite;
   }
-  
+
   static Color getCellValueSelectedColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
         ? cellValueSelectedDark
@@ -111,15 +115,19 @@ class ThemeColor {
 
   /// text colors
   static Color getTextFixedColor(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark ? fixedTextDark : textFixedLite;
+    return Theme.of(context).brightness == Brightness.dark ? textFixedDark : textFixedLite;
   }
 
   static Color getTextBodyColor(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark ? bodyTextDark : textBodyLite;
+    return Theme.of(context).brightness == Brightness.dark ? textBodyDark : textBodyLite;
   }
-  
+
   static Color getTooltipText(BuildContext context) {
-    return Theme.of(context).brightness == Brightness.dark ? textBodyLite : bodyTextDark;
+    return Theme.of(context).brightness == Brightness.dark ? textBodyLite : textBodyDark;
+  }
+
+  static Color getTextCandidateColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark ? textCandidateDark : textCandidateLite;
   }
 
   /// border and shadow colors
@@ -136,33 +144,19 @@ class ThemeColor {
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     switch (difficulty) {
       case 'Beginner':
-        return isDarkMode
-            ? Color.fromARGB(255, 234, 0, 255)
-            : Color.fromARGB(255, 129, 78, 223);
+        return isDarkMode ? Color.fromARGB(255, 234, 0, 255) : Color.fromARGB(255, 129, 78, 223);
       case 'Easy':
-        return isDarkMode
-            ? Color.fromARGB(255, 0, 183, 255)
-            : Color.fromARGB(255, 15, 104, 187);
+        return isDarkMode ? Color.fromARGB(255, 0, 183, 255) : Color.fromARGB(255, 15, 104, 187);
       case 'Medium':
-        return isDarkMode
-            ? Color.fromARGB(255, 9, 255, 0)
-            : Color.fromARGB(255, 6, 179, 0);
+        return isDarkMode ? Color.fromARGB(255, 9, 255, 0) : Color.fromARGB(255, 6, 179, 0);
       case 'Hard':
-        return isDarkMode
-            ? Color.fromARGB(255, 219, 223, 5)
-            : Color.fromARGB(255, 167, 170, 0);
+        return isDarkMode ? Color.fromARGB(255, 219, 223, 5) : Color.fromARGB(255, 167, 170, 0);
       case 'Expert':
-        return isDarkMode
-            ? Color.fromARGB(255, 255, 115, 0)
-            : Color.fromARGB(255, 204, 92, 0);
+        return isDarkMode ? Color.fromARGB(255, 255, 115, 0) : Color.fromARGB(255, 204, 92, 0);
       case 'Impossible':
-        return isDarkMode
-            ? Color.fromARGB(255, 192, 0, 0)
-            : Color.fromARGB(255, 197, 0, 0);
+        return isDarkMode ? Color.fromARGB(255, 192, 0, 0) : Color.fromARGB(255, 197, 0, 0);
       default:
-        return isDarkMode
-            ? Color.fromARGB(255, 255, 255, 255)
-            : Color.fromARGB(255, 0, 0, 0);
+        return isDarkMode ? Color.fromARGB(255, 255, 255, 255) : Color.fromARGB(255, 0, 0, 0);
     }
   }
 }
@@ -172,55 +166,111 @@ abstract class ThemeStyle {
   static const double gridNormalBorder = 0.0;
   static const double gridThickBorder = 3.0;
 
+  /// breakpoints by screen size
+  static const double bpXS = 350.0;
+  static const double bpSM = 500.0;
+  static const double bpMD = 750.0;
+  static const double bpLG = 1000.0;
+  static const double bpXL = 1440.0;
+  static const double bpXXL = 1920.0;
+
+  /// font sizes by use
+  static const double gameTitleSize = 32.0;
+  static const double subtitleSize = 24.0;
+  static const double mediumGameTextSize = 24.0;
+  static const double smallGameTextSize = 20.0;
+  static const double tinyTextSize = 16.0;
+
   /////////////////////////////////
   ///        TEXT STYLES        ///
   /////////////////////////////////
-  
+
+  static double getTextFactor(double screenSize, double initialFactor) {
+    if (screenSize < bpXS) {
+      return initialFactor * 0.7;
+    } else if (screenSize < bpSM) {
+      return initialFactor * 0.8;
+    } else if (screenSize < bpMD) {
+      return initialFactor;
+    } else if (screenSize < bpLG) {
+      return initialFactor * 1.05;
+    } else if (screenSize < bpXL) {
+      return initialFactor * 1.1;
+    } else {
+      return initialFactor * 1.2;
+    }
+  }
+
   static TextStyle gameTitle(BuildContext context) {
+    // compute font size based on screen width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double factor = 1.25;
+    double fontSize = gameTitleSize * getTextFactor(screenWidth, factor);
+
     return TextStyle(
       fontFamily: fontFamily,
       color: ThemeColor.getTextBodyColor(context),
-      fontSize: 36,
+      fontSize: fontSize,
       height: 1.5,
       fontWeight: FontWeight.w600,
     );
   }
 
   static TextStyle subtitle(BuildContext context) {
+    // compute font size based on screen width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double factor = 1.15;
+    double fontSize = subtitleSize * getTextFactor(screenWidth, factor);
+
     return TextStyle(
       fontFamily: fontFamily,
       color: ThemeColor.getTextBodyColor(context),
-      fontSize: 24,
+      fontSize: fontSize,
       height: 1.5,
       fontWeight: FontWeight.w400,
     );
   }
 
   static TextStyle mediumGameText(BuildContext context) {
+    // compute font size based on screen width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double factor = 1;
+    double fontSize = mediumGameTextSize * getTextFactor(screenWidth, factor);
+
     return TextStyle(
       fontFamily: fontFamily,
       color: ThemeColor.getTextBodyColor(context),
-      fontSize: 24,
+      fontSize: fontSize,
       height: 1.0,
       fontWeight: FontWeight.w400,
     );
   }
 
   static TextStyle smallGameText(BuildContext context) {
+    // compute font size based on screen width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double factor = 0.9;
+    double fontSize = smallGameTextSize * getTextFactor(screenWidth, factor);
+
     return TextStyle(
       fontFamily: fontFamily,
       color: ThemeColor.getTextBodyColor(context),
-      fontSize: 20,
+      fontSize: fontSize,
       height: 1.0,
       fontWeight: FontWeight.w300,
     );
   }
 
   static TextStyle tinyText(BuildContext context) {
+    // compute font size based on screen width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double factor = 0.8;
+    double fontSize = tinyTextSize * getTextFactor(screenWidth, factor);
+
     return TextStyle(
       fontFamily: fontFamily,
       color: ThemeColor.getTextBodyColor(context),
-      fontSize: 16,
+      fontSize: fontSize,
       height: 1.0,
       fontWeight: FontWeight.w200,
     );
@@ -235,7 +285,7 @@ abstract class ThemeStyle {
       fontWeight: FontWeight.w400,
     );
   }
-  
+
   /// Italicized text style for options
   static TextStyle helperText(BuildContext context) {
     return TextStyle(
@@ -259,51 +309,66 @@ abstract class ThemeStyle {
   }
 
   static TextStyle buttonText(BuildContext context) {
+    // compute font size based on screen width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double factor = 1;
+    double fontSize = smallGameTextSize * getTextFactor(screenWidth, factor);
+
     return TextStyle(
       fontFamily: fontFamily,
       color: ThemeColor.getTextBodyColor(context),
-      fontSize: 20,
+      fontSize: fontSize,
       height: 1,
       fontWeight: FontWeight.w500,
     );
   }
 
   static TextStyle candidateText(BuildContext context) {
+    // compute font size based on screen width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double factor = 0.75;
+    double fontSize = tinyTextSize * getTextFactor(screenWidth, factor);
+
     return TextStyle(
-      fontSize: 12.0,
-      color:
-          Theme.of(context).brightness == Brightness.dark
-              ? ThemeColor.bodyTextDark
-              : ThemeColor.textBodyLite,
+      fontSize: fontSize,
+      color: ThemeColor.getTextBodyColor(context),
       fontWeight: FontWeight.w400,
     );
   }
 
   // style for pre-filled grid cells
   static TextStyle fixedGridText(BuildContext context) {
+    // compute font size based on screen width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double factor = 1;
+    double fontSize = mediumGameTextSize * getTextFactor(screenWidth, factor);
+
     return TextStyle(
       fontFamily: fontFamily,
       color: ThemeColor.getTextFixedColor(context),
-      fontSize: 25,
+      fontSize: fontSize,
       fontWeight: FontWeight.w700,
     );
   }
 
   // style for user-entered grid cells
   static TextStyle gridText(BuildContext context) {
+    // compute font size based on screen width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double factor = 1;
+    double fontSize = mediumGameTextSize * getTextFactor(screenWidth, factor);
+
     return TextStyle(
       fontFamily: fontFamily,
       color: ThemeColor.getTextBodyColor(context),
-      fontSize: 25,
+      fontSize: fontSize,
       fontWeight: FontWeight.w400,
     );
   }
 
   // style for number buttons
   static TextStyle numberButtonText(BuildContext context) {
-    return fixedGridText(context).copyWith(
-      color: ThemeColor.getTextBodyColor(context),
-    );
+    return fixedGridText(context).copyWith(color: ThemeColor.getTextBodyColor(context));
   }
 
   /////////////////////////////////
@@ -328,9 +393,10 @@ abstract class ThemeStyle {
   static TextButtonThemeData candidateButtonThemeData(BuildContext context, bool isCandidateMode) {
     return TextButtonThemeData(
       style: TextButton.styleFrom(
-        backgroundColor: isCandidateMode
-            ? ThemeColor.getAccentColor(context)
-            : ThemeColor.getCellAccentColor(context),
+        backgroundColor:
+            isCandidateMode
+                ? ThemeColor.getAccentColor(context)
+                : ThemeColor.getCellAccentColor(context),
         foregroundColor: ThemeColor.getTextBodyColor(context),
         textStyle: buttonText(context),
         padding: EdgeInsets.all(20),
@@ -343,10 +409,14 @@ abstract class ThemeStyle {
   }
 
   static IconButtonThemeData iconButtonThemeData(BuildContext context) {
+    // scale using screen width
+    double screenWidth = MediaQuery.of(context).size.width;
+    double factor = 1;
+    double iconSize = 40.0 * getTextFactor(screenWidth, factor);
+
     return IconButtonThemeData(
       style: IconButton.styleFrom(
-        minimumSize: Size(65.0, 65.0),
-        iconSize: 40.0,
+        iconSize: iconSize,
         foregroundColor: ThemeColor.getTextBodyColor(context),
       ),
     );

@@ -17,11 +17,11 @@ class SettingsManager extends ChangeNotifier {
   GenerationMode get generationMode => _generationMode;
 
   // lazy mode
-  bool _lazyMode = true; // Default to lazy mode
+  bool _lazyMode = true;
   bool get lazyMode => _lazyMode;
 
   // auto candidate mode
-  bool _autoCandidateMode = true; // Default to auto candidate mode
+  bool _autoCandidateMode = false;
   bool get autoCandidateMode => _autoCandidateMode;
 
   /////////////////////////////

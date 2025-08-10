@@ -371,8 +371,11 @@ class _GamePageState extends State<GamePage> {
   }
 
   Widget _buildCandidateModeToggleButton() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      spacing: 0.0,
+      runSpacing: 0.0,
+      alignment: WrapAlignment.center,
+      runAlignment: WrapAlignment.center,
       children: [
         TextButton(
           onPressed: () {
@@ -427,11 +430,11 @@ class _GamePageState extends State<GamePage> {
   /// The puzzle board will be updated with the tapped number at the currently selected cell.
   /// If no cell is selected, it issues a message to the user.
   void _onNumberButtonTap(int number) {
-    // first, save the current cell value
-    int original = _puzzleBoard[_selectedRow!][_selectedCol!];
-
     // check if a cell is selected and it is editable
     if (_selectedRow != null && _selectedCol != null && _isEditable[_selectedRow!][_selectedCol!]) {
+      // save the current cell value
+      int original = _puzzleBoard[_selectedRow!][_selectedCol!];
+
       if (_isCandidateMode) {
         // set state for candidate mode
         setState(() {
@@ -450,6 +453,7 @@ class _GamePageState extends State<GamePage> {
           _selectedValue = number; // Update selected value
         });
       }
+      
 
       // Check if the entered number matches the solution
       if (number != _solutionBoard[_selectedRow!][_selectedCol!] && number != original) {
@@ -526,13 +530,6 @@ class _GamePageState extends State<GamePage> {
   void _onClearButtonTap() {
     // disallow clearing if no cell is selected
     if (_selectedRow == null || _selectedCol == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Select a cell first!', style: ThemeStyle.tooltip(context)),
-          duration: Duration(seconds: 2),
-          dismissDirection: DismissDirection.down,
-        ),
-      );
       return;
     }
 
@@ -647,11 +644,11 @@ class _GamePageState extends State<GamePage> {
                 '$_difficulty | Hints: $_hintsUsed | Mistakes: $_mistakes',
                 style: ThemeStyle.mediumGameText(context),
               ),
-              spacing.smallVerticalSpacer,
+              spacing.verticalSpacer,
               // Game buttons (hint, settings, etc.)
               Wrap(
                 alignment: WrapAlignment.center,
-                spacing: 8.0,
+                spacing: 24.0,
                 runSpacing: 8.0,
                 children: <Widget>[
                   // New Game button
@@ -713,6 +710,7 @@ class _GamePageState extends State<GamePage> {
                   ),
                 ],
               ),
+              spacing.smallVerticalSpacer,
               // Grid
               _buildSudokuGrid(),
               // Candidate mode toggle button

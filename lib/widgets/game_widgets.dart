@@ -111,10 +111,10 @@ class SudokuTile extends StatelessWidget {
     Color backgroundColor = _getDefaultBackgroundColor(context, row, col);
 
     // these override the default background color
-    if (isCorrect) {
-      backgroundColor = ThemeColor.getCellCorrectColor(context);
-    } else if (isHinted) {
+    if (isHinted) {
       backgroundColor = ThemeColor.getCellHintColor(context);
+    } else if (isCorrect) {
+      backgroundColor = ThemeColor.getCellCorrectColor(context);
     } else if (isIncorrect) {
       backgroundColor = ThemeColor.getCellWrongColor(context);
     } else if (isSelected) {

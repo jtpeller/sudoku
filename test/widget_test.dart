@@ -17,6 +17,6 @@ void main() {
 
     // TODO: Write test program
     // Verify that the app starts with the splash screen.
-    expect(find.text('Sudoku Game'), findsOneWidget);
+    expect(find.text('Sudoku'), findsOneWidget);
   });
 }

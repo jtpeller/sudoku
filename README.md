@@ -68,7 +68,7 @@ The following build instructions are to be used per platform:
     flutter build web --base-href "/sudoku/" --release
     ```
 
-- Android (untested)
+- Android (tested, working in Android Studio)
 
     ```sh
     flutter build apk --release
