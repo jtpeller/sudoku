@@ -790,12 +790,13 @@ class _GamePageState extends State<GamePage> {
                     icon: Icons.lightbulb,
                     label: 'Hint',
                     onPressed: () {
-                      _timerMgr.pause();
                       _onHintButtonTap();
-                      _timerMgr.resume();
                     },
                   ),
                   // Settings button
+                  // TODO: timer needs to pause and resume appropriately.
+                  // Not quite sure how to do this, since the resume has to be timed
+                  // once we return to this window, and I'm not sure how to implement that.
                   widgets.TooltipIconButton(
                     icon: Icons.settings,
                     label: 'Options',
