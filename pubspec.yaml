@@ -14,6 +14,7 @@ dependencies:
   provider: ^6.1.2
   animated_splash_screen: ^1.3.0
   page_transition: ^2.2.1
+  count_up_flutter: ^0.0.5
 
 dev_dependencies:
   flutter_test:
@@ -22,20 +23,36 @@ dev_dependencies:
   flutter_launcher_icons: ^0.10.0
 
 flutter_icons:
-  image_path: "icon/SudokuIcon.png"
+  image_path: "assets/icon/SudokuIcon.png"
   android: true
   ios: true
   web:
     generate: true
-    image_path: "icon/SudokuIcon.png"
+    image_path: "assets/icon/SudokuIcon.png"
   windows:
     generate: true
-    image_path: "icon/SudokuIcon.png"
+    image_path: "assets/icon/SudokuIcon.png"
     icon_size: 256
   macos:
     generate: true
-    image_path: "icon/SudokuIcon.png"
+    image_path: "assets/icon/SudokuIcon.png"
   remove_alpha_ios: true
 
 flutter:
+  fonts:
+    - family: "Montserrat"
+      fonts:
+        - asset: "assets/fonts/Montserrat-VariableFont_wght.ttf"
+        - asset: "assets/fonts/Montserrat-Italic-VariableFont_wght.ttf"
+          style: italic
+    - family: "Inter"
+      fonts:
+        - asset: "assets/fonts/Inter-VariableFont_opsz,wght.ttf"
+        - asset: "assets/fonts/Inter-Italic-VariableFont_opsz,wght.ttf"
+          style: italic
+    - family: "NotoSans"
+      fonts:
+        - asset: "assets/fonts/NotoSans-VariableFont_wdth,wght.ttf"
+        - asset: "assets/fonts/NotoSans-Italic-VariableFont_wdth,wght.ttf"
+          style: italic
   uses-material-design: true

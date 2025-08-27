@@ -81,6 +81,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.19.1"
+  count_up_flutter:
+    dependency: "direct main"
+    description:
+      name: count_up_flutter
+      sha256: c401757bef93c93669fa56b5997105c76eb2d11dd7a37268f63b84cab4d3b172
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.5"
   crypto:
     dependency: transitive
     description:

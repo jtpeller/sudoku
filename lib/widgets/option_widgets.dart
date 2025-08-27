@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'spacing.dart';
-import '../theme/styles.dart';
+import '../theme/colors.dart';
+import '../theme/text.dart';
 
 // Text with Helper
 class HelperText extends StatelessWidget {

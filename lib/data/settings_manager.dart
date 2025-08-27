@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 enum GenerationMode { symmetrical, random }
 
-
 class SettingsManager extends ChangeNotifier {
   ////////////////////////
   ///    ATTRIBUTES    ///
@@ -23,6 +22,14 @@ class SettingsManager extends ChangeNotifier {
   // auto candidate mode
   bool _autoCandidateMode = false;
   bool get autoCandidateMode => _autoCandidateMode;
+
+  // check correctness
+  bool _checkCorrectness = true;
+  bool get checkCorrectness => _checkCorrectness;
+
+  // enable timer
+  bool _enableTimer = true;
+  bool get enableTimer => _enableTimer;
 
   /////////////////////////////
   ///    MANAGER METHODS    ///
@@ -45,6 +52,16 @@ class SettingsManager extends ChangeNotifier {
 
   void setAutoCandidateMode(bool value) {
     _autoCandidateMode = value;
+    notifyListeners();
+  }
+
+  void setCheckCorrectness(bool value) {
+    _checkCorrectness = value;
+    notifyListeners();
+  }
+
+  void setEnableTimer(bool value) {
+    _enableTimer = value;
     notifyListeners();
   }
 }

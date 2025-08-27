@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
-import '../theme/styles.dart';
+import '../theme/colors.dart';
+import '../theme/text.dart';
 
 ///////////////////////////////
 ///       SHOW DIALOGS      ///
 ///////////////////////////////
 
-void showYesNoDialog(BuildContext context, String title, String message, VoidCallback onYes) {
+void showYesNoDialog(
+  BuildContext context,
+  String title,
+  String message, {
+  VoidCallback? onYes,
+  VoidCallback? onNo,
+}) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -15,26 +22,46 @@ void showYesNoDialog(BuildContext context, String title, String message, VoidCal
         actions: [
           TextButton(
             onPressed: () {
-              //Navigator.of(context).pop();
-              onYes();
+              Navigator.of(context).pop(); // Close the dialog
+              if (onYes != null) {
+                onYes();
+              }
             },
             child: Text('Yes'),
           ),
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text('No')),
+          TextButton(
+            child: Text('No'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (onNo != null) {
+                onNo();
+              }
+            },
+          ),
         ],
       );
     },
   );
 }
 
-void showInfoDialog(BuildContext context, String title, Widget content) {
+void showInfoDialog(BuildContext context, String title, Widget content, {VoidCallback? onDone}) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
         title: Text(title),
         content: content,
-        actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text('OK'))],
+        actions: [
+          TextButton(
+            child: Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (onDone != null) {
+                onDone();
+              }
+            },
+          ),
+        ],
       );
     },
   );
@@ -87,6 +114,7 @@ class SudokuTile extends StatelessWidget {
   final bool isHinted;
   final bool isValueSelected;
   final bool isHighlighted;
+  final bool showCorrect;
   final VoidCallback onTap;
 
   const SudokuTile({
@@ -102,6 +130,7 @@ class SudokuTile extends StatelessWidget {
     required this.isHinted,
     required this.isValueSelected,
     required this.isHighlighted,
+    required this.showCorrect,
     required this.onTap,
   });
 
@@ -111,18 +140,14 @@ class SudokuTile extends StatelessWidget {
     Color backgroundColor = _getDefaultBackgroundColor(context, row, col);
 
     // these override the default background color
-    if (isHinted) {
-      backgroundColor = ThemeColor.getCellHintColor(context);
-    } else if (isCorrect) {
-      backgroundColor = ThemeColor.getCellCorrectColor(context);
-    } else if (isIncorrect) {
-      backgroundColor = ThemeColor.getCellWrongColor(context);
-    } else if (isSelected) {
+    if (isSelected) {
       backgroundColor = ThemeColor.getAccentColor(context);
     } else if (isValueSelected) {
       backgroundColor = ThemeColor.getCellValueSelectedColor(context);
     } else if (isHighlighted) {
       backgroundColor = ThemeColor.getCellHighlightColor(context);
+    } else if (isHinted) {
+      backgroundColor = ThemeColor.getCellHintColor(context);
     }
 
     return GestureDetector(
@@ -155,13 +180,23 @@ class SudokuTile extends StatelessWidget {
   /// Builds the content of the Sudoku tile based on its value and candidates.
   Widget _buildTileContent(BuildContext context) {
     if (value != 0) {
+      // decide which color to use
+      Color textColor = ThemeColor.getTextGridColor(context);
+      if (isHinted || isFixed) {
+        textColor = ThemeColor.getTextFixedColor(context);
+      } else if (isCorrect && showCorrect && !isHinted) {
+        textColor = ThemeColor.getCellCorrectColor(context);
+      } else if (isIncorrect && showCorrect) {
+        textColor = ThemeColor.getCellWrongColor(context);
+      }
+
+      TextStyle textStyle =
+          isFixed || isHinted
+              ? ThemeStyle.fixedGridText(context).copyWith(color: textColor)
+              : ThemeStyle.gridText(context).copyWith(color: textColor);
+
       // Display a single number
-      return Center(
-        child: Text(
-          value.toString(),
-          style: isFixed ? ThemeStyle.fixedGridText(context) : ThemeStyle.gridText(context),
-        ),
-      );
+      return Center(child: Text(value.toString(), style: textStyle));
     } else if (candidates.isNotEmpty) {
       // Display candidates
       return GridView.count(
@@ -178,7 +213,7 @@ class SudokuTile extends StatelessWidget {
           return Center(
             child: Text(
               candidates.contains(candidateNumber) ? candidateNumber.toString() : '',
-              style: ThemeStyle.candidateText(context),
+              style: ThemeStyle.candidateText(context).copyWith(),
             ),
           );
         }),
@@ -188,7 +223,7 @@ class SudokuTile extends StatelessWidget {
       return Container();
     }
   }
-  
+
   Color _getDefaultBackgroundColor(BuildContext context, int row, int col) {
     // alternate by 3x3 grids
     return ((row ~/ 3) + (col ~/ 3)) % 2 == 0

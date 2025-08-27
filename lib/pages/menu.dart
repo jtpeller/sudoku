@@ -1,9 +1,8 @@
-// lib/menu.dart
 import 'package:flutter/material.dart';
 
 import 'game.dart';
 import '../widgets/spacing.dart' as spacing;
-import '../theme/styles.dart';
+import '../theme/text.dart';
 import 'options.dart';
 
 class MainMenu extends StatelessWidget {

@@ -3,9 +3,14 @@ import 'package:provider/provider.dart';
 
 import '../data/settings_manager.dart';
 import '../data/sudoku_generator.dart';
-import '../theme/styles.dart';
+
+import '../theme/colors.dart';
+import '../theme/text.dart';
+
 import '../widgets/spacing.dart' as spacing;
 import '../widgets/game_widgets.dart' as widgets;
+import '../widgets/stopwatch.dart';
+
 import 'options.dart';
 
 /// ### GamePage
@@ -28,21 +33,50 @@ class GamePage extends StatefulWidget {
 ///
 /// Manages the game logic, UI updates, and user interactions for the Sudoku game page.
 class _GamePageState extends State<GamePage> {
+  /// difficulty mode; Ex: 'Beginner' or 'Expert'
   late String _difficulty;
-  // Initialize with empty boards to prevent LateInitializationError
+
+  /// Matrix of user's entries (plus fixed cells)
   List<List<int>> _puzzleBoard = List.generate(9, (_) => List.filled(9, 0));
+
+  /// Matrix of solutions (compare against this for correctness)
   List<List<int>> _solutionBoard = List.generate(9, (_) => List.filled(9, 0));
+
+  /// Matrix of flags on whether this cell is editable or not
   List<List<bool>> _isEditable = List.generate(9, (_) => List.filled(9, false));
+
+  /// Matrix of flags on whether this cell was determined using a hint.
   List<List<bool>> _isHinted = List.generate(9, (_) => List.filled(9, false));
+
+  /// List of counts of each number in the grid (1 thru 9)
   List<int> _numbersCount = List.filled(9, 0);
+
+  /// Matrix of user's (or auto-candidate mode's) candidates
   List<List<Set<int>>> _candidateBoard = List.generate(9, (_) => List.generate(9, (_) => <int>{}));
+
+  /// Whether the user is in candidate mode (true) or normal mode (false)
   bool _isCandidateMode = false;
 
-  int? _selectedRow; // Currently selected cell row
-  int? _selectedCol; // Currently selected cell column
-  int? _selectedValue; // Currently selected cell value
-  int _hintsUsed = 0; // Counter for hints used
-  int _mistakes = 0; // Counter for mistakes made
+  /// Currently selected cell's row
+  int? _selectedRow;
+
+  /// Currently selected cell's column
+  int? _selectedCol;
+
+  /// Currently selected cell's value
+  int? _selectedValue;
+
+  /// How many hints used in this game
+  int _hintsUsed = 0;
+
+  /// How many mistakes made in this game
+  int _mistakes = 0;
+
+  /// Manages the timer.
+  StopwatchManager _timerMgr = StopwatchManager();
+
+  /// the timer
+  Stopwatch? _gameTimer;
 
   @override
   void initState() {
@@ -53,7 +87,7 @@ class _GamePageState extends State<GamePage> {
 
   /// Generates a new Sudoku puzzle based on the current difficulty level.
   ///
-  /// This method uses the `SudokuGenerator` to create a new puzzle and its solution.
+  /// This method uses the [SudokuGenerator] class to create a new puzzle and its solution.
   /// It updates the puzzle board, solution board, and editable cells in the state.
   /// Also resets the currently selected row and column to null.
   void _generateNewPuzzle({GenerationMode mode = GenerationMode.symmetrical}) {
@@ -64,14 +98,17 @@ class _GamePageState extends State<GamePage> {
       _puzzleBoard = generatedData['puzzle'];
       _solutionBoard = generatedData['solution'];
       _isEditable = generatedData['isEditable'];
-      _isHinted = List.generate(9, (_) => List.filled(9, false)); // Reset hints
+      _isHinted = List.generate(9, (_) => List.filled(9, false));
       _numbersCount = _initNumbersCount();
-      _hintsUsed = 0; // Reset hints used counter
-      _mistakes = 0; // Reset mistakes counter
+      _hintsUsed = 0;
+      _mistakes = 0;
       // Reset selection
-      _selectedRow = null; // Reset selection
-      _selectedCol = null; // Reset selection
+      _selectedRow = null;
+      _selectedCol = null;
+      _selectedValue = null;
     });
+
+    _timerMgr.reset();
   }
 
   /// Clears the current Sudoku puzzle.
@@ -98,6 +135,10 @@ class _GamePageState extends State<GamePage> {
       _selectedCol = null; // Reset selection
       _selectedValue = null; // Reset selected value
     });
+
+    // reset the timer
+    _timerMgr.reset();
+    _timerMgr.start();
 
     // Show a message indicating the puzzle has been cleared
     ScaffoldMessenger.of(context).showSnackBar(
@@ -143,19 +184,25 @@ class _GamePageState extends State<GamePage> {
               : 'Play Again?';
 
       // Show a dialog or message indicating the game is solved
+      _timerMgr.pause();
       widgets.showYesNoDialog(
         context,
         'Congratulations!',
-        'You solved an $_difficulty Sudoku puzzle!\n'
+        'You solved an $_difficulty Sudoku puzzle in $_gameTimer!\n'
             "Here's your stats:\n"
             '> $hintMsg'
             '> $mistakeMsg'
             '$perfect',
-        () {
-          Navigator.of(context).pop();
+        onYes: () {
+          // generate new puzzle, and then resume timer.
           _generateNewPuzzle(
             mode: context.read<SettingsManager>().generationMode,
           ); // Generate a new puzzle
+          _timerMgr.resume();
+        },
+        onNo: () {
+          // only resume timer.
+          _timerMgr.resume();
         },
       );
       return true; // Puzzle is solved
@@ -167,93 +214,75 @@ class _GamePageState extends State<GamePage> {
   ///     BUILDER METHODS     ///
   ///////////////////////////////
 
-  /// Generates the number buttons for the Sudoku game.
-  /// Creates buttons for numbers 1 to 9 and a clear button.
-  Widget _buildNumberButtons() {
-    // set up the numbers list
-    // numbers 1-9, plus a clear button
-    List<String> numbers = List.generate(9, (index) => (index + 1).toString());
-    numbers.add('X'); // Clear button
-
-    // create via gridview
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final minWidth = 250.0;
-        final maxWidth = 400.0;
-        final double targetWidth =
-            (constraints.maxWidth < constraints.maxHeight
-                ? constraints.maxWidth
-                : constraints.maxHeight) -
-            100; // Padding to prevent overflow
-        final double containerSize =
-            targetWidth > maxWidth ? maxWidth : (targetWidth < minWidth ? minWidth : targetWidth);
-
-        return Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: minWidth, maxWidth: containerSize),
-            child: GridView.count(
-              crossAxisCount: 5, // 5 buttons per row
-              crossAxisSpacing: 0.0,
-              mainAxisSpacing: 0.0,
-              childAspectRatio: 1.5,
-              padding: const EdgeInsets.all(0.0),
-              shrinkWrap: true, // Shrink to fit the content
-              physics: NeverScrollableScrollPhysics(), // Disable scrolling
-              children: List.generate(numbers.length, (index) {
-                final num = numbers[index];
-                final isFull =
-                    index < 9 ? _numbersCount[index] >= 9 : false; // Check if number is full
-
-                return Padding(
-                  padding: const EdgeInsets.all(0.0),
-                  child: OutlinedButton(
-                    onPressed: () {
-                      if (num == 'X') {
-                        _onClearButtonTap(); // Clear button
-                      } else {
-                        _onNumberButtonTap(int.parse(num)); // Number button
-                      }
-                    },
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor:
-                          isFull
-                              ? ThemeColor.getCellCorrectColor(context)
-                              : ThemeColor.getCellAccentColor(context),
-                      foregroundColor: ThemeColor.getTextBodyColor(context),
-                      padding: EdgeInsets.all(0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(0.0),
-                        side: BorderSide(color: ThemeColor.getBorderColor(context)),
-                      ),
-                      textStyle: ThemeStyle.numberButtonText(context),
-                    ),
-                    child: Center(
-                      child:
-                          num == 'X'
-                              ? Icon(
-                                Icons.clear,
-                                size: ThemeStyle.numberButtonText(context).fontSize! * 1.2,
-                              )
-                              : Text(
-                                num,
-                                style: _isCandidateMode ? ThemeStyle.candidateText(context) : ThemeStyle.numberButtonText(context),
-                                textAlign: TextAlign.center,
-                              ),
-                    ),
-                  ),
-                );
-              }),
+  /// returns the help text as a scrollable rich text widget.
+  Widget _buildHelpText(BuildContext context) {
+    return SingleChildScrollView(
+      child: RichText(
+        text: TextSpan(
+          style: ThemeStyle.smallGameText(context),
+          children: [
+            TextSpan(
+              text:
+                  'Sudoku is a logic-based number placement puzzle. '
+                  'The objective is to fill a 9x9 grid with digits so that each column, '
+                  'each row, and each of the nine 3x3 subgrids that compose the grid '
+                  'each contain all of the digits from 1 to 9.\n\n'
+                  'To fill in the grid, and solve the puzzle, tap on a cell in the grid to select it. '
+                  'Tap a number button to fill in the selected cell. When all the cells have been filled '
+                  'in and are correct, the puzzle is solved!\n\n'
+                  'Use the Hint button (',
             ),
-          ),
-        );
-      },
+            WidgetSpan(
+              child: Icon(Icons.lightbulb, size: ThemeStyle.smallGameText(context).fontSize!),
+            ),
+            TextSpan(
+              text:
+                  ') to reveal the correct number for the selected cell.\n'
+                  'Use the Clear Button (',
+            ),
+            WidgetSpan(child: Icon(Icons.clear, size: ThemeStyle.smallGameText(context).fontSize!)),
+            TextSpan(
+              text:
+                  ') to remove the number from the selected cell.\n'
+                  'You can also start a new game (',
+            ),
+            WidgetSpan(child: Icon(Icons.add, size: ThemeStyle.smallGameText(context).fontSize!)),
+            TextSpan(text: ') at any time.'),
+          ],
+        ),
+      ),
     );
+  }
+
+  /// Builds the
+  List<Widget> _buildStatsRow(BuildContext context) {
+    // init the list, and add difficulty / hints
+    List<Widget> statsRow = [
+      Text(_difficulty, style: ThemeStyle.mediumGameText(context)),
+      Text('Hints: $_hintsUsed', style: ThemeStyle.mediumGameText(context)),
+    ];
+
+    // if check correctness is on, show mistakes
+    if (context.read<SettingsManager>().checkCorrectness) {
+      statsRow.add(Text('Mistakes: $_mistakes', style: ThemeStyle.mediumGameText(context)));
+    }
+
+    // finally, add the timer if enabled
+    if (context.read<SettingsManager>().enableTimer) {
+      statsRow.add(
+        // TODO: add a pause button here.
+        _gameTimer!,
+      );
+    }
+
+    return statsRow;
   }
 
   /// Builds the Sudoku grid using a [GridView.builder].
   Widget _buildSudokuGrid() {
     // decide whether to compute candidates
     final computeCandidates = context.read<SettingsManager>().autoCandidateMode;
+    final checkCorrectness = context.read<SettingsManager>().checkCorrectness;
     if (computeCandidates) {
       // compute candidates for the current puzzle
       _candidateBoard = SudokuGenerator.computeCandidates(_puzzleBoard, _solutionBoard);
@@ -316,6 +345,7 @@ class _GamePageState extends State<GamePage> {
                   isValueSelected:
                       _puzzleBoard[row][col] == _selectedValue && _puzzleBoard[row][col] != 0,
                   isHighlighted: highlighted,
+                  showCorrect: checkCorrectness,
                   onTap: () => _onCellTap(row, col),
                 );
               },
@@ -326,54 +356,10 @@ class _GamePageState extends State<GamePage> {
     );
   }
 
-  /// returns the help text as a scrollable rich text widget.
-  Widget _buildHelpText(BuildContext context) {
-    return SingleChildScrollView(
-      child: RichText(
-        text: TextSpan(
-          style: ThemeStyle.smallGameText(context),
-          children: [
-            TextSpan(
-              text:
-                  'Sudoku is a logic-based number placement puzzle. '
-                  'The objective is to fill a 9x9 grid with digits so that each column, '
-                  'each row, and each of the nine 3x3 subgrids that compose the grid'
-                  'each contain all of the digits from 1 to 9.\n\n'
-                  'To fill in the grid, and solve the puzzle, tap on a cell in the grid to select it. '
-                  'Tap a number button to fill in the selected cell. When all the cells have been filled '
-                  'in and are correct, the puzzle is solved!\n\n'
-                  'Use the Hint button (',
-            ),
-            WidgetSpan(
-              child: Icon(Icons.lightbulb, size: ThemeStyle.smallGameText(context).fontSize! * 1.2),
-            ),
-            TextSpan(
-              text:
-                  ') to reveal the correct number for the selected cell.\n'
-                  'Use the Clear Button (',
-            ),
-            WidgetSpan(
-              child: Icon(Icons.clear, size: ThemeStyle.smallGameText(context).fontSize! * 1.2),
-            ),
-            TextSpan(
-              text:
-                  ') to remove the number from the selected cell.\n'
-                  'You can also start a new game (',
-            ),
-            WidgetSpan(
-              child: Icon(Icons.add, size: ThemeStyle.smallGameText(context).fontSize! * 1.2),
-            ),
-            TextSpan(text: ') at any time.'),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildCandidateModeToggleButton() {
     return Wrap(
-      spacing: 0.0,
-      runSpacing: 0.0,
+      spacing: 8.0,
+      runSpacing: 8.0,
       alignment: WrapAlignment.center,
       runAlignment: WrapAlignment.center,
       children: [
@@ -384,7 +370,7 @@ class _GamePageState extends State<GamePage> {
             });
           },
           style: ThemeStyle.candidateButtonThemeData(context, !_isCandidateMode).style,
-          child: Text('Normal', style: ThemeStyle.buttonText(context)),
+          child: Text('Normal', style: ThemeStyle.smallButtonText(context)),
         ),
         TextButton(
           onPressed: () {
@@ -393,9 +379,95 @@ class _GamePageState extends State<GamePage> {
             });
           },
           style: ThemeStyle.candidateButtonThemeData(context, _isCandidateMode).style,
-          child: Text('Candidate', style: ThemeStyle.buttonText(context)),
+          child: Text('Candidate', style: ThemeStyle.smallButtonText(context)),
         ),
       ],
+    );
+  }
+
+  /// Generates the number buttons for the Sudoku game.
+  /// Creates buttons for numbers 1 to 9 and a clear button.
+  Widget _buildNumberButtons() {
+    // set up the numbers list
+    // numbers 1-9, plus a clear button
+    List<String> numbers = List.generate(9, (index) => (index + 1).toString());
+    numbers.add('X'); // Clear button
+
+    // create via gridview
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final minWidth = 250.0;
+        final maxWidth = 400.0;
+        final double targetWidth =
+            (constraints.maxWidth < constraints.maxHeight
+                ? constraints.maxWidth
+                : constraints.maxHeight) -
+            100; // Padding to prevent overflow
+        final double containerSize =
+            targetWidth > maxWidth ? maxWidth : (targetWidth < minWidth ? minWidth : targetWidth);
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: minWidth, maxWidth: containerSize),
+            child: GridView.count(
+              crossAxisCount: 5, // 5 buttons per row
+              crossAxisSpacing: 8.0,
+              mainAxisSpacing: 8.0,
+              childAspectRatio: 1.8,
+              padding: const EdgeInsets.all(0.0),
+              shrinkWrap: true, // Shrink to fit the content
+              physics: NeverScrollableScrollPhysics(), // Disable scrolling
+              children: List.generate(numbers.length, (index) {
+                final num = numbers[index];
+                final isFull =
+                    index < 9 ? _numbersCount[index] >= 9 : false; // Check if number is full
+
+                return Padding(
+                  padding: const EdgeInsets.all(0.0),
+                  child: OutlinedButton(
+                    onPressed: () {
+                      if (num == 'X') {
+                        _onClearButtonTap(); // Clear button
+                      } else {
+                        _onNumberButtonTap(int.parse(num)); // Number button
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor:
+                          isFull
+                              ? ThemeColor.getCellCorrectColor(context)
+                              : ThemeColor.getCellAccentColor(context),
+                      foregroundColor: ThemeColor.getTextBodyColor(context),
+                      padding: EdgeInsets.all(0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(0.0),
+                        side: BorderSide(color: ThemeColor.getBorderColor(context)),
+                      ),
+                      textStyle: ThemeStyle.numberButtonText(context),
+                    ),
+                    child: Center(
+                      child:
+                          num == 'X'
+                              ? Icon(
+                                Icons.clear,
+                                size: ThemeStyle.numberButtonText(context).fontSize! * 1.2,
+                              )
+                              : Text(
+                                num,
+                                style:
+                                    _isCandidateMode
+                                        ? ThemeStyle.candidateText(context)
+                                        : ThemeStyle.numberButtonText(context),
+                                textAlign: TextAlign.center,
+                              ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -405,24 +477,13 @@ class _GamePageState extends State<GamePage> {
 
   /// Handles the tap event on a Sudoku cell.
   ///
-  /// Selects the cell at [row] x [col] (if it is editable).
-  /// Otherwise deselects any currently selected cell (allows de-selection).
+  /// Selects the cell at [row] x [col]
   void _onCellTap(int row, int col) {
-    // check if this cell is editable.
-    if (_isEditable[row][col]) {
-      setState(() {
-        _selectedRow = row;
-        _selectedCol = col;
-        _selectedValue = _puzzleBoard[row][col];
-      });
-    } else {
-      // not editable (this is a fixed cell). Deselect.
-      setState(() {
-        _selectedRow = null;
-        _selectedCol = null;
-        _selectedValue = null;
-      });
-    }
+    setState(() {
+      _selectedRow = row;
+      _selectedCol = col;
+      _selectedValue = _puzzleBoard[row][col];
+    });
   }
 
   /// Handles the tap event on a [number] button in the Sudoku game.
@@ -453,7 +514,6 @@ class _GamePageState extends State<GamePage> {
           _selectedValue = number; // Update selected value
         });
       }
-      
 
       // Check if the entered number matches the solution
       if (number != _solutionBoard[_selectedRow!][_selectedCol!] && number != original) {
@@ -490,8 +550,10 @@ class _GamePageState extends State<GamePage> {
       setState(() {
         _puzzleBoard[_selectedRow!][_selectedCol!] = _solutionBoard[_selectedRow!][_selectedCol!];
         _isHinted[_selectedRow!][_selectedCol!] = true;
+        _isEditable[_selectedRow!][_selectedCol!] = false; // set as non-editable.
         _hintsUsed++;
         _updateNumbersCount(_solutionBoard[_selectedRow!][_selectedCol!]);
+        _selectedValue = _solutionBoard[_selectedRow!][_selectedCol!];
       });
       _checkPuzzleSolved(context);
     }
@@ -554,9 +616,12 @@ class _GamePageState extends State<GamePage> {
       );
       return;
     }
+
+    // clear only if editable
     if (_selectedRow != null && _selectedCol != null && _isEditable[_selectedRow!][_selectedCol!]) {
       setState(() {
-        _puzzleBoard[_selectedRow!][_selectedCol!] = 0; // Clear the cell
+        _puzzleBoard[_selectedRow!][_selectedCol!] = 0;
+        _selectedValue = null;
       });
     }
   }
@@ -631,6 +696,14 @@ class _GamePageState extends State<GamePage> {
   Widget build(BuildContext context) {
     final mgr = Provider.of<SettingsManager>(context);
 
+    _gameTimer = Stopwatch(
+      startSeconds: _timerMgr.elapsedSeconds + 0.0,
+      countUp: true,
+      manager: _timerMgr,
+      textStyle: ThemeStyle.mediumGameText(context),
+      autoStart: true,
+    );
+
     return Scaffold(
       appBar: AppBar(title: Text('Sudoku')),
       body: Center(
@@ -640,11 +713,15 @@ class _GamePageState extends State<GamePage> {
             children: <Widget>[
               Text('Sudoku', style: ThemeStyle.gameTitle(context)),
               //Text(, style: ThemeStyle.subtitle(context)),
-              Text(
-                '$_difficulty | Hints: $_hintsUsed | Mistakes: $_mistakes',
-                style: ThemeStyle.mediumGameText(context),
+              Wrap(
+                alignment: WrapAlignment.center,
+                runAlignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 25.0,
+                children: _buildStatsRow(context),
               ),
               spacing.verticalSpacer,
+              spacing.smallVerticalSpacer,
               // Game buttons (hint, settings, etc.)
               Wrap(
                 alignment: WrapAlignment.center,
@@ -656,13 +733,17 @@ class _GamePageState extends State<GamePage> {
                     icon: Icons.add,
                     label: 'New Game',
                     onPressed: () {
+                      _timerMgr.pause();
                       widgets.showYesNoDialog(
                         context,
                         'New Game',
                         'Are you sure you want to start a new game?',
-                        () {
-                          Navigator.of(context).pop(); // Close the dialog
+                        onYes: () {
                           _generateNewPuzzle(mode: mgr.generationMode); // Generate a new puzzle
+                          _timerMgr.resume();
+                        },
+                        onNo: () {
+                          _timerMgr.resume();
                         },
                       );
                     },
@@ -673,39 +754,58 @@ class _GamePageState extends State<GamePage> {
                     label: 'Restart',
                     onPressed: () {
                       // open a dialog to confirm restart
+                      _timerMgr.pause();
                       widgets.showYesNoDialog(
                         context,
                         'Restart Game',
                         'Are you sure you want to restart the game?',
-                        () {
-                          Navigator.of(context).pop(); // Close the dialog
+                        onYes: () {
                           _clearPuzzle(); // Generate a new puzzle
                         },
+                        onNo: () {
+                          _timerMgr.resume();
+                        },
                       );
+                      _timerMgr.resume();
                     },
                   ),
                   // Help button
                   widgets.TooltipIconButton(
                     icon: Icons.help_outline,
                     label: 'Help',
-                    onPressed:
-                        () => widgets.showInfoDialog(context, 'Help', _buildHelpText(context)),
+                    onPressed: () {
+                      _timerMgr.pause();
+                      widgets.showInfoDialog(
+                        context,
+                        'Help',
+                        _buildHelpText(context),
+                        onDone: () {
+                          _timerMgr.resume();
+                        },
+                      );
+                    },
                   ),
                   // Hint button
                   widgets.TooltipIconButton(
                     icon: Icons.lightbulb,
                     label: 'Hint',
-                    onPressed: _onHintButtonTap,
+                    onPressed: () {
+                      _timerMgr.pause();
+                      _onHintButtonTap();
+                      _timerMgr.resume();
+                    },
                   ),
                   // Settings button
                   widgets.TooltipIconButton(
                     icon: Icons.settings,
                     label: 'Options',
                     onPressed: () {
+                      _timerMgr.pause();
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const OptionsPage()),
                       );
+                      _timerMgr.resume();
                     },
                   ),
                 ],
