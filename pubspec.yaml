@@ -50,9 +50,4 @@ flutter:
         - asset: "assets/fonts/Inter-VariableFont_opsz,wght.ttf"
         - asset: "assets/fonts/Inter-Italic-VariableFont_opsz,wght.ttf"
           style: italic
-    - family: "NotoSans"
-      fonts:
-        - asset: "assets/fonts/NotoSans-VariableFont_wdth,wght.ttf"
-        - asset: "assets/fonts/NotoSans-Italic-VariableFont_wdth,wght.ttf"
-          style: italic
   uses-material-design: true

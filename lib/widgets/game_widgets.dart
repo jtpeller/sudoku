@@ -6,6 +6,7 @@ import '../theme/text.dart';
 ///       SHOW DIALOGS      ///
 ///////////////////////////////
 
+/// Shows a dialog with "Yes" and "No" options.
 void showYesNoDialog(
   BuildContext context,
   String title,

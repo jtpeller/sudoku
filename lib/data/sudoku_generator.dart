@@ -1,13 +1,17 @@
 import 'dart:math';
 
+enum SudokuDifficulty { beginner, easy, medium, hard, expert, impossible }
+
+enum GenerationMode {symmetric, random}
+
 class SudokuGenerator {
   late List<List<int>> _board;
   late List<List<int>> _solution;
   late List<List<bool>> _isEditable;
   final Random _random = Random();
 
-  // Public method to generate a Sudoku puzzle
-  Map<String, dynamic> generateSudoku(String difficulty, {int mode = 0}) {
+  /// Generates a sudoku puzzle. Provides the board, solution, and which cells are editable.
+  Map<String, dynamic> generateSudoku(SudokuDifficulty difficulty, {GenerationMode mode = GenerationMode.symmetric}) {
     _board = List.generate(9, (_) => List.filled(9, 0));
     _solution = List.generate(9, (_) => List.filled(9, 0));
     _isEditable = List.generate(9, (_) => List.filled(9, false));
@@ -63,6 +67,42 @@ class SudokuGenerator {
     return candidates;
   }
 
+  static String getDifficultyName(SudokuDifficulty difficulty) {
+    switch (difficulty) {
+      case SudokuDifficulty.beginner:
+        return 'Beginner';
+      case SudokuDifficulty.easy:
+        return 'Easy';
+      case SudokuDifficulty.medium:
+        return 'Medium';
+      case SudokuDifficulty.hard:
+        return 'Hard';
+      case SudokuDifficulty.expert:
+        return 'Expert';
+      case SudokuDifficulty.impossible:
+        return 'Impossible';
+    }
+  }
+
+  static SudokuDifficulty getDifficulty(String name) {
+    switch (name.toLowerCase()) {
+      case 'beginner':
+        return SudokuDifficulty.beginner;
+      case 'easy':
+        return SudokuDifficulty.easy;
+      case 'medium':
+        return SudokuDifficulty.medium;
+      case 'hard':
+        return SudokuDifficulty.hard;
+      case 'expert':
+        return SudokuDifficulty.expert;
+      case 'impossible':
+        return SudokuDifficulty.impossible;
+      default:
+        return SudokuDifficulty.easy; // Default to easy if unrecognized
+    }
+  }
+
   // Recursive backtracking function to fill the 9x9 Sudoku board
   bool _fillBoard(int row, int col) {
     if (row == 9) {
@@ -116,31 +156,28 @@ class SudokuGenerator {
   }
 
   // Removes cells based on difficulty
-  void _removeCells(String difficulty, int mode) {
+  void _removeCells(SudokuDifficulty difficulty, GenerationMode mode) {
     int cellsToRemove;
-    switch (difficulty.toLowerCase()) {
-      case 'beginner':
+    switch (difficulty) {
+      case SudokuDifficulty.beginner:
         cellsToRemove = 20;
-      case 'easy':
+      case SudokuDifficulty.easy:
         cellsToRemove = 30;
-      case 'medium':
+      case SudokuDifficulty.medium:
         cellsToRemove = 40;
-      case 'hard':
+      case SudokuDifficulty.hard:
         cellsToRemove = 50;
-      case 'expert':
+      case SudokuDifficulty.expert:
         cellsToRemove = 60;
-      case 'impossible':
+      case SudokuDifficulty.impossible:
         cellsToRemove = 70;
-      default:
-        // Default to easy
-        cellsToRemove = 30;
     }
 
     // Remove cells based on the mode
     switch (mode) {
-      case 0: // symmetric
+      case GenerationMode.symmetric:
         _removeSymmetrically(cellsToRemove);
-      case 1: // random
+      case GenerationMode.random:
         _removeRandomly(cellsToRemove);
     }
   }

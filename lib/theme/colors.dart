@@ -39,11 +39,11 @@ class ThemeColor {
 
   // ... cell background colors
   static const Color cellBgLite = Color.fromARGB(255, 255, 255, 255);
-  static const Color cellBgAccentLite = Color.fromARGB(255, 216, 216, 216);
+  static const Color cellBgAccentLite = Color.fromARGB(255, 224, 224, 224);
 
   // ... cell state colors
   static const Color cellHighLite = Color(0xFFABF5FF);
-  static const Color cellCorrectLite = Color.fromARGB(255, 138, 255, 164);
+  static const Color cellCorrectLite = Color.fromARGB(255, 6, 128, 32);
   static const Color cellHintLite = Color(0xFFB5C900);
   static const Color cellWrongLite = Color.fromARGB(255, 161, 3, 3);
   static const Color cellValueSelectedLite = Color.fromARGB(255, 216, 173, 255);

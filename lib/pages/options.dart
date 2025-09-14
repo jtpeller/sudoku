@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../data/settings_manager.dart';
+import '../data/sudoku_generator.dart';
 import '../widgets/spacing.dart' as spacing;
 import '../theme/text.dart';
 import '../widgets/option_widgets.dart' as widgets;
@@ -71,7 +72,7 @@ class OptionsPage extends StatelessWidget {
                           'Symmetric: Empty cells are "reflected" across the sudoku grid for symmetry.\n\n'
                           'Random: Empty cells are randomly chosen.',
                         currentValue: mgr.generationMode,
-                        values: const [GenerationMode.symmetrical, GenerationMode.random],
+                        values: const [GenerationMode.symmetric, GenerationMode.random],
                         options: const ['Symmetrical', 'Random'],
                         onChanged: (GenerationMode? newValue) {
                           if (newValue != null) {
@@ -122,7 +123,7 @@ class OptionsPage extends StatelessWidget {
                       spacing.verticalSpacer,
                       widgets.SwitchOption(
                         label: 'Enable Timer',
-                        helpText: 'If enabled, a timer is shown, which shows how long you have take to solve the puzzle. The timer automatically pauses when the game is not in focus. We would hate to penalize you for switching to respond to a text, change your options, or look at cat videos for a few hours.',
+                        helpText: 'If enabled, a timer is shown, which shows how long you have take to solve the puzzle. The timer automatically pauses when the game is not in focus, allowing you to do something else, like responding to a text, change your options, or doom scroll for a few hours.',
                         value: mgr.enableTimer,
                         onChanged: (bool newValue) {
                           mgr.setEnableTimer(newValue);

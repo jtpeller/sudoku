@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-enum GenerationMode { symmetrical, random }
+import 'sudoku_generator.dart';
 
 class SettingsManager extends ChangeNotifier {
   ////////////////////////
@@ -12,7 +11,7 @@ class SettingsManager extends ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
 
   // generation mode
-  GenerationMode _generationMode = GenerationMode.symmetrical;
+  GenerationMode _generationMode = GenerationMode.symmetric;
   GenerationMode get generationMode => _generationMode;
 
   // lazy mode

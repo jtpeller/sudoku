@@ -21,7 +21,7 @@ import 'options.dart';
 ///
 /// `difficulty` determines the complexity of the generated puzzle.
 class GamePage extends StatefulWidget {
-  final String difficulty;
+  final SudokuDifficulty difficulty;
 
   const GamePage({super.key, required this.difficulty});
 
@@ -32,9 +32,9 @@ class GamePage extends StatefulWidget {
 /// The state class for the [GamePage] widget.
 ///
 /// Manages the game logic, UI updates, and user interactions for the Sudoku game page.
-class _GamePageState extends State<GamePage> {
+class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
   /// difficulty mode; Ex: 'Beginner' or 'Expert'
-  late String _difficulty;
+  late SudokuDifficulty _difficulty;
 
   /// Matrix of user's entries (plus fixed cells)
   List<List<int>> _puzzleBoard = List.generate(9, (_) => List.filled(9, 0));
@@ -45,14 +45,26 @@ class _GamePageState extends State<GamePage> {
   /// Matrix of flags on whether this cell is editable or not
   List<List<bool>> _isEditable = List.generate(9, (_) => List.filled(9, false));
 
+  /// Copy of the original is editable, used when user restarts.
+  List<List<bool>> _originalIsEditable = List.generate(9, (_) => List.filled(9, false));
+
   /// Matrix of flags on whether this cell was determined using a hint.
   List<List<bool>> _isHinted = List.generate(9, (_) => List.filled(9, false));
 
   /// List of counts of each number in the grid (1 thru 9)
   List<int> _numbersCount = List.filled(9, 0);
 
-  /// Matrix of user's (or auto-candidate mode's) candidates
-  List<List<Set<int>>> _candidateBoard = List.generate(9, (_) => List.generate(9, (_) => <int>{}));
+  /// Matrix of user's candidates.
+  List<List<Set<int>>> _userCandidateBoard = List.generate(
+    9,
+    (_) => List.generate(9, (_) => <int>{}),
+  );
+
+  /// Matrix of computed candidates.
+  List<List<Set<int>>> _realCandidateBoard = List.generate(
+    9,
+    (_) => List.generate(9, (_) => <int>{}),
+  );
 
   /// Whether the user is in candidate mode (true) or normal mode (false)
   bool _isCandidateMode = false;
@@ -78,11 +90,41 @@ class _GamePageState extends State<GamePage> {
   /// the timer
   Stopwatch? _gameTimer;
 
+  /// Initializes the game page.
   @override
   void initState() {
     super.initState();
+
+    // add the observer to listen to app lifecycle changes
+    WidgetsBinding.instance.addObserver(this);
+
+    // Resume the timer to begin (if it has been initialized already).
+    _timerMgr.resume();
+
     _difficulty = widget.difficulty;
     _generateNewPuzzle(); // Generate the initial puzzle
+  }
+
+  /// Handles dispose, which doesn't necessarily mean anything needs to be destroyed (e.g.,
+  /// the timer may just be paused instead!).
+  @override
+  void dispose() {
+    // Remove the observer
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// This is called when the app state changes, overriding behavior in
+  /// [WidgetsBindingObserver].
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      // Pause the timer when the app is backgrounded
+      _timerMgr.pause();
+    } else if (state == AppLifecycleState.resumed) {
+      // Resume the timer when the app is brought back to the foreground
+      _timerMgr.resume();
+    }
   }
 
   /// Generates a new Sudoku puzzle based on the current difficulty level.
@@ -90,16 +132,21 @@ class _GamePageState extends State<GamePage> {
   /// This method uses the [SudokuGenerator] class to create a new puzzle and its solution.
   /// It updates the puzzle board, solution board, and editable cells in the state.
   /// Also resets the currently selected row and column to null.
-  void _generateNewPuzzle({GenerationMode mode = GenerationMode.symmetrical}) {
+  void _generateNewPuzzle({GenerationMode mode = GenerationMode.symmetric}) {
     final generator = SudokuGenerator();
-    final generatedData = generator.generateSudoku(_difficulty, mode: mode.index);
+    final generatedData = generator.generateSudoku(_difficulty, mode: mode);
 
     setState(() {
       _puzzleBoard = generatedData['puzzle'];
       _solutionBoard = generatedData['solution'];
       _isEditable = generatedData['isEditable'];
+      _originalIsEditable = List.generate(9, (i) => List.from(generatedData['isEditable'][i]));
       _isHinted = List.generate(9, (_) => List.filled(9, false));
       _numbersCount = _initNumbersCount();
+      _realCandidateBoard = SudokuGenerator.computeCandidates(
+        generatedData['puzzle'],
+        generatedData['solution'],
+      );
       _hintsUsed = 0;
       _mistakes = 0;
       // Reset selection
@@ -109,6 +156,12 @@ class _GamePageState extends State<GamePage> {
     });
 
     _timerMgr.reset();
+    _timerMgr.start();
+
+    // select a cell if lazy mode is enabled.
+    if (context.read<SettingsManager>().lazyMode) {
+      _moveToNextCell(context);
+    }
   }
 
   /// Clears the current Sudoku puzzle.
@@ -117,8 +170,8 @@ class _GamePageState extends State<GamePage> {
     List<List<int>> clearedBoard = List.generate(9, (i) => List.from(_puzzleBoard[i]));
     for (int r = 0; r < 9; r++) {
       for (int c = 0; c < 9; c++) {
-        // Clear only editable cells
-        if (_isEditable[r][c]) {
+        // Clear only originally-editable cells
+        if (_originalIsEditable[r][c]) {
           clearedBoard[r][c] = 0;
         }
       }
@@ -126,7 +179,8 @@ class _GamePageState extends State<GamePage> {
 
     setState(() {
       _puzzleBoard = clearedBoard; // Update the puzzle board
-      _candidateBoard = List.generate(9, (_) => List.generate(9, (_) => <int>{}));
+      _userCandidateBoard = List.generate(9, (_) => List.generate(9, (_) => <int>{}));
+      _isEditable = List.generate(9, (i) => List.from(_originalIsEditable[i]));
       _isHinted = List.generate(9, (_) => List.filled(9, false)); // Reset hints
       _numbersCount = _initNumbersCount(); // Reset numbers count
       _hintsUsed = 0; // Reset hints used counter
@@ -168,6 +222,13 @@ class _GamePageState extends State<GamePage> {
 
     // check if the puzzle is solved
     if (isSolved) {
+      // Set every cell as uneditable
+      for (int r = 0; r < 9; r++) {
+        for (int c = 0; c < 9; c++) {
+          _isEditable[r][c] = false;
+        }
+      }
+
       String hintMsg =
           _hintsUsed > 0
               ? 'Hints Used: $_hintsUsed. (It\'s OK, I won\'t tell)\n'
@@ -188,10 +249,11 @@ class _GamePageState extends State<GamePage> {
       widgets.showYesNoDialog(
         context,
         'Congratulations!',
-        'You solved an $_difficulty Sudoku puzzle in $_gameTimer!\n'
+        'You solved an $_difficulty Sudoku puzzle!\n'
             "Here's your stats:\n"
             '> $hintMsg'
             '> $mistakeMsg'
+            '> Time: ${_timerMgr.getTime()}\n\n'
             '$perfect',
         onYes: () {
           // generate new puzzle, and then resume timer.
@@ -201,13 +263,43 @@ class _GamePageState extends State<GamePage> {
           _timerMgr.resume();
         },
         onNo: () {
-          // only resume timer.
-          _timerMgr.resume();
+          // TODO: Instead, stop the timer, and disallow it from continuing.
+          _timerMgr.pause();
         },
       );
       return true; // Puzzle is solved
     }
     return false; // Puzzle is not solved
+  }
+
+  /// Checks if the current board state is in a deadlock state.
+  ///
+  /// This means the user cannot logically determine the remaining cells.
+  bool _checkDeadlock() {
+    // Loop through the rows.
+    for (int r = 0; r < 9; r++) {
+      // Loop through the columns.
+      for (int c = 0; c < 9; c++) {
+        // Only need to check empty cells.
+        if (_puzzleBoard[r][c] == 0) {
+          // if any empty cell has only one candidate, then not a deadlock
+          if (_realCandidateBoard[r][c].length == 1) {
+            return false;
+          }
+
+          // Deadlock can occur across several cells.
+          // TODO: Therefore, checks need to scan multiple cells in order to determine whether
+          // the cells are interwoven.
+
+          // if any empty cell has multiple candidates, and one of them is the solution, then not a deadlock
+          if (_realCandidateBoard[r][c].length > 1 &&
+              _realCandidateBoard[r][c].contains(_solutionBoard[r][c])) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
   }
 
   ///////////////////////////////
@@ -258,7 +350,10 @@ class _GamePageState extends State<GamePage> {
   List<Widget> _buildStatsRow(BuildContext context) {
     // init the list, and add difficulty / hints
     List<Widget> statsRow = [
-      Text(_difficulty, style: ThemeStyle.mediumGameText(context)),
+      Text(
+        SudokuGenerator.getDifficultyName(_difficulty),
+        style: ThemeStyle.mediumGameText(context),
+      ),
       Text('Hints: $_hintsUsed', style: ThemeStyle.mediumGameText(context)),
     ];
 
@@ -269,10 +364,11 @@ class _GamePageState extends State<GamePage> {
 
     // finally, add the timer if enabled
     if (context.read<SettingsManager>().enableTimer) {
-      statsRow.add(
-        // TODO: add a pause button here.
-        _gameTimer!,
-      );
+      double width = ThemeStyle.getFontSize(context, 3, ThemeStyle.fontSizeMD);
+      statsRow.add(SizedBox(width: width, child: Center(child: _gameTimer!)));
+    } else {
+      statsRow.add(Offstage(child: _gameTimer!));
+      //statsRow.add(SizedBox(width: 1e-12, height: 1e-12, child: _gameTimer!));
     }
 
     return statsRow;
@@ -281,12 +377,9 @@ class _GamePageState extends State<GamePage> {
   /// Builds the Sudoku grid using a [GridView.builder].
   Widget _buildSudokuGrid() {
     // decide whether to compute candidates
-    final computeCandidates = context.read<SettingsManager>().autoCandidateMode;
     final checkCorrectness = context.read<SettingsManager>().checkCorrectness;
-    if (computeCandidates) {
-      // compute candidates for the current puzzle
-      _candidateBoard = SudokuGenerator.computeCandidates(_puzzleBoard, _solutionBoard);
-    }
+
+    _realCandidateBoard = SudokuGenerator.computeCandidates(_puzzleBoard, _solutionBoard);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -329,11 +422,16 @@ class _GamePageState extends State<GamePage> {
                         (_selectedRow! ~/ 3 == currentBoxRow &&
                             _selectedCol! ~/ 3 == currentBoxCol));
 
+                List<List<Set<int>>> whichCandidates =
+                    context.read<SettingsManager>().autoCandidateMode
+                        ? _realCandidateBoard
+                        : _userCandidateBoard;
+
                 return widgets.SudokuTile(
                   row: row,
                   col: col,
                   value: _puzzleBoard[row][col],
-                  candidates: _candidateBoard[row][col],
+                  candidates: whichCandidates[row][col],
                   isSelected: (_selectedRow == row && _selectedCol == col),
                   isFixed: !_isEditable[row][col],
                   isIncorrect:
@@ -500,10 +598,10 @@ class _GamePageState extends State<GamePage> {
         // set state for candidate mode
         setState(() {
           // toggle the candidate number in the candidate board
-          if (_candidateBoard[_selectedRow!][_selectedCol!].contains(number)) {
-            _candidateBoard[_selectedRow!][_selectedCol!].remove(number);
+          if (_userCandidateBoard[_selectedRow!][_selectedCol!].contains(number)) {
+            _userCandidateBoard[_selectedRow!][_selectedCol!].remove(number);
           } else {
-            _candidateBoard[_selectedRow!][_selectedCol!].add(number);
+            _userCandidateBoard[_selectedRow!][_selectedCol!].add(number);
           }
         });
         return; // no need to continue, candidates are handled separately
@@ -517,11 +615,27 @@ class _GamePageState extends State<GamePage> {
 
       // Check if the entered number matches the solution
       if (number != _solutionBoard[_selectedRow!][_selectedCol!] && number != original) {
+        // Check if this is a deadlock condition, where a user would not be able to logically deduce
+        // the remaining cells. If that is the case, then accept this solution, and modify the solution board.
+        bool isDeadlock = _checkDeadlock();
+        if (isDeadlock) {
+          // modify the solution board to accept this number
+          _solutionBoard[_selectedRow!][_selectedCol!] = number;
+          // recompute candidates
+          _realCandidateBoard = SudokuGenerator.computeCandidates(_puzzleBoard, _solutionBoard);
+
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Deadlock detected & resolved!')));
+        }
+
         // Increment mistakes counter
         _mistakes += 1;
 
         // error message
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Incorrect number!')));
+        if (context.read<SettingsManager>().checkCorrectness) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Incorrect number!')));
+        }
       } else {
         // number matches, increment the count for this number
         _updateNumbersCount(number);
@@ -532,7 +646,7 @@ class _GamePageState extends State<GamePage> {
       // initiate lazy mode if enabled
       if (context.read<SettingsManager>().lazyMode &&
           number == _solutionBoard[_selectedRow!][_selectedCol!]) {
-        _moveToNextCell();
+        _moveToNextCell(context);
       }
     }
   }
@@ -550,7 +664,6 @@ class _GamePageState extends State<GamePage> {
       setState(() {
         _puzzleBoard[_selectedRow!][_selectedCol!] = _solutionBoard[_selectedRow!][_selectedCol!];
         _isHinted[_selectedRow!][_selectedCol!] = true;
-        _isEditable[_selectedRow!][_selectedCol!] = false; // set as non-editable.
         _hintsUsed++;
         _updateNumbersCount(_solutionBoard[_selectedRow!][_selectedCol!]);
         _selectedValue = _solutionBoard[_selectedRow!][_selectedCol!];
@@ -584,7 +697,7 @@ class _GamePageState extends State<GamePage> {
 
     // initiate lazy mode if enabled
     if (context.read<SettingsManager>().lazyMode) {
-      _moveToNextCell();
+      _moveToNextCell(context);
     }
   }
 
@@ -598,7 +711,7 @@ class _GamePageState extends State<GamePage> {
     if (_isCandidateMode) {
       // clear candidates for the selected cell
       setState(() {
-        _candidateBoard[_selectedRow!][_selectedCol!] = <int>{}; // Clear candidates
+        _userCandidateBoard[_selectedRow!][_selectedCol!] = <int>{}; // Clear candidates
       });
       return; // no need to continue.
     }
@@ -646,14 +759,16 @@ class _GamePageState extends State<GamePage> {
   }
 
   /// Moves to the next cell
-  void _moveToNextCell() {
+  void _moveToNextCell(BuildContext context) {
+    bool conditionalMove = context.read<SettingsManager>().checkCorrectness;
     // if no cell is selected, do nothing
     if (_selectedRow == null || _selectedCol == null) return;
 
     // move to the next editable cell
     for (int r = _selectedRow!; r < 9; r++) {
       for (int c = (r == _selectedRow! ? _selectedCol! + 1 : 0); c < 9; c++) {
-        if (_isEditable[r][c] && _puzzleBoard[r][c] != _solutionBoard[r][c]) {
+        if ((_isEditable[r][c] && !conditionalMove) ||
+            (_isEditable[r][c] && conditionalMove && _puzzleBoard[r][c] != _solutionBoard[r][c])) {
           _onCellTap(r, c); // Select the next editable cell
           return; // Exit after selecting the next cell
         }
@@ -663,7 +778,8 @@ class _GamePageState extends State<GamePage> {
     // if a cell cannot be found, start at 0 and wrap around to the selected cell
     for (int r = 0; r < _selectedRow!; r++) {
       for (int c = 0; c < _selectedCol!; c++) {
-        if (_isEditable[r][c] && _puzzleBoard[r][c] != _solutionBoard[r][c]) {
+        if ((_isEditable[r][c] && !conditionalMove) ||
+            (_isEditable[r][c] && conditionalMove && _puzzleBoard[r][c] != _solutionBoard[r][c])) {
           _onCellTap(r, c);
           return;
         }
@@ -711,8 +827,9 @@ class _GamePageState extends State<GamePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
+              // Title
               Text('Sudoku', style: ThemeStyle.gameTitle(context)),
-              //Text(, style: ThemeStyle.subtitle(context)),
+              // Stats row
               Wrap(
                 alignment: WrapAlignment.center,
                 runAlignment: WrapAlignment.center,
@@ -740,7 +857,6 @@ class _GamePageState extends State<GamePage> {
                         'Are you sure you want to start a new game?',
                         onYes: () {
                           _generateNewPuzzle(mode: mgr.generationMode); // Generate a new puzzle
-                          _timerMgr.resume();
                         },
                         onNo: () {
                           _timerMgr.resume();
@@ -766,7 +882,6 @@ class _GamePageState extends State<GamePage> {
                           _timerMgr.resume();
                         },
                       );
-                      _timerMgr.resume();
                     },
                   ),
                   // Help button
@@ -794,15 +909,12 @@ class _GamePageState extends State<GamePage> {
                     },
                   ),
                   // Settings button
-                  // TODO: timer needs to pause and resume appropriately.
-                  // Not quite sure how to do this, since the resume has to be timed
-                  // once we return to this window, and I'm not sure how to implement that.
                   widgets.TooltipIconButton(
                     icon: Icons.settings,
                     label: 'Options',
-                    onPressed: () {
+                    onPressed: () async {
                       _timerMgr.pause();
-                      Navigator.push(
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const OptionsPage()),
                       );

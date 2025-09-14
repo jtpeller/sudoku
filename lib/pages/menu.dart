@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sudoku/data/sudoku_generator.dart';
 
 import 'game.dart';
 import '../widgets/spacing.dart' as spacing;
@@ -23,7 +24,9 @@ class MainMenu extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => GamePage(difficulty: diff)),
+              MaterialPageRoute(
+                builder: (context) => GamePage(difficulty: SudokuGenerator.getDifficulty(diff)),
+              ),
             );
           },
           style: ThemeStyle.menuButtonThemeData(context, diff).style,
@@ -57,10 +60,7 @@ class MainMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Main Menu'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Main Menu'), centerTitle: true),
       body: SingleChildScrollView(
         child: SizedBox(
           // get full width of the screen

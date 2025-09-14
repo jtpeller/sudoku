@@ -40,7 +40,7 @@ class Stopwatch extends StatefulWidget {
   /// necessary values for initialization.
   final StopwatchManager manager;
 
-  const Stopwatch({
+  Stopwatch({
     super.key,
     required this.startSeconds,
     required this.countUp,
@@ -73,6 +73,14 @@ class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
       return Duration(seconds: 0);
     } else {
       return _controller.duration! * _controller.value;
+    }
+  }
+
+  void setNewTime(DateTime time) {
+    if (widget.manager.elapsedSeconds == 0.0) {
+      DateTime now = DateTime.now();
+      widget.manager.elapsedSeconds = now.difference(time).inSeconds.toDouble();
+      _controller.value = widget.manager.elapsedSeconds;
     }
   }
 
@@ -114,13 +122,12 @@ class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
 
     // begin timer, if auto-start is on.
     if (widget.autoStart) {
-      print('Beginning timer...');
       start(startSeconds: widget.startSeconds);
     }
   }
 
   @override
-  dispose() {
+  void dispose() {
     widget.manager.elapsedSeconds = _controller.value;
     _controller.dispose();
     super.dispose();
@@ -161,12 +168,9 @@ class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
   /// Does nothing if the state is not 'running'.
   void pause() {
     if (_timerStatus == StopwatchStatus.running) {
-      print('pausing...');
       _controller.stop();
       _timerStatus = StopwatchStatus.paused;
-      // TODO: this elapsed time is wrong too
       widget.manager.elapsedSeconds = _controller.value;
-      print(elapsed.inSeconds);
       setState(() {});
     }
   }
@@ -176,11 +180,8 @@ class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
   /// Does nothing if the state is not 'paused'.
   void resume() {
     if (_timerStatus == StopwatchStatus.paused) {
-      print('resuming...');
       _timerStatus = StopwatchStatus.running;
-      // TODO: this restore value is wrong
       double restore = widget.manager.elapsedSeconds.toDouble();
-      print(restore);
       if (widget.countUp) {
         _controller.forward(from: restore);
       } else {
@@ -276,6 +277,13 @@ class StopwatchManager {
     }
   }
 
+  /// Set the timer to time since the provided [time].
+  void setNewTime(DateTime time) {
+    if (_state != null) {
+      _state!.setNewTime(time);
+    }
+  }
+
   /// Whether the timer is in a 'running' state
   bool isRunning() {
     if (_state != null) {
@@ -312,6 +320,14 @@ class StopwatchManager {
   StopwatchStatus? getState() {
     if (_state != null) {
       return _state!.timerStatus;
+    }
+    return null;
+  }
+
+  /// retrieves the time
+  String? getTime() {
+    if (_state != null) {
+      return _state!.time;
     }
     return null;
   }
