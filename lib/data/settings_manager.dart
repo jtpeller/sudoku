@@ -7,7 +7,7 @@ class SettingsManager extends ChangeNotifier {
   ////////////////////////
 
   // theme mode (light vs dark)
-  ThemeMode _themeMode = ThemeMode.dark; // Default to dark mode
+  ThemeMode _themeMode = ThemeMode.dark;
   ThemeMode get themeMode => _themeMode;
 
   // generation mode
@@ -17,6 +17,10 @@ class SettingsManager extends ChangeNotifier {
   // lazy mode
   bool _lazyMode = true;
   bool get lazyMode => _lazyMode;
+
+  // TODO: candidate update
+  //bool _candidateUpdate = true;
+  //bool get candidateUpdate => _candidateUpdate;
 
   // auto candidate mode
   bool _autoCandidateMode = false;
@@ -48,6 +52,11 @@ class SettingsManager extends ChangeNotifier {
     _lazyMode = value;
     notifyListeners();
   }
+
+  //void setCandidateUpdate(bool value) {
+  //  _candidateUpdate = value;
+  //  notifyListeners();
+  //}
 
   void setAutoCandidateMode(bool value) {
     _autoCandidateMode = value;

@@ -76,6 +76,11 @@ class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
     }
   }
 
+  void setSeconds(double seconds) {
+    widget.manager.elapsedSeconds = seconds;
+    _controller.value = widget.manager.elapsedSeconds;
+  }
+
   void setNewTime(DateTime time) {
     if (widget.manager.elapsedSeconds == 0.0) {
       DateTime now = DateTime.now();
@@ -270,10 +275,18 @@ class StopwatchManager {
     }
   }
 
-  /// Reset the timer, optionally to the provided seconds value
-  void reset({double? seconds}) {
+  /// Stop the timer
+  void stop() {
     if (_state != null) {
       _state!.stop();
+    }
+  }
+
+  /// Reset the timer, optionally to the provided seconds value
+  void reset({double? seconds}) {
+    stop();
+    if (_state != null) {
+      _state!.setSeconds(seconds ?? 0.0);
     }
   }
 

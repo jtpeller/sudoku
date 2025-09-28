@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:sudoku/data/sudoku_generator.dart';
 
 import 'game.dart';
-import '../widgets/spacing.dart' as spacing;
-import '../theme/text.dart';
 import 'options.dart';
+
+import '../widgets/common.dart' as common;
+import '../data/sudoku_generator.dart';
+
+import '../theme/colors.dart';
+import '../theme/text.dart';
+
+import '../widgets/spacing.dart' as spacing;
 
 class MainMenu extends StatelessWidget {
   MainMenu({super.key});
@@ -13,7 +18,6 @@ class MainMenu extends StatelessWidget {
   Column buildMenu(BuildContext context) {
     // begin the menu items list with title + spacer.
     List<Widget> menuItems = [];
-    menuItems.add(spacing.massiveVerticalSpacer);
     menuItems.add(Text('Sudoku', style: ThemeStyle.gameTitle(context)));
     menuItems.add(spacing.verticalSpacer);
 
@@ -24,8 +28,13 @@ class MainMenu extends StatelessWidget {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => GamePage(difficulty: SudokuGenerator.getDifficulty(diff)),
+              PageRouteBuilder(
+                pageBuilder:
+                    (context, animation, secondaryAnimation) =>
+                        GamePage(difficulty: SudokuGenerator.getDifficulty(diff)),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) =>
+                        FadeTransition(opacity: animation, child: child),
               ),
             );
           },
@@ -42,13 +51,20 @@ class MainMenu extends StatelessWidget {
     menuItems.add(
       OutlinedButton(
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const OptionsPage()));
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => const OptionsPage(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) =>
+                      FadeTransition(opacity: animation, child: child),
+            ),
+          );
         },
         style: ThemeStyle.menuButtonThemeData(context, '').style,
         child: const Text('Options'),
       ),
     );
-    menuItems.add(spacing.massiveVerticalSpacer);
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -60,12 +76,18 @@ class MainMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Main Menu'), centerTitle: true),
-      body: SingleChildScrollView(
-        child: SizedBox(
-          // get full width of the screen
-          width: MediaQuery.of(context).size.width,
-          child: buildMenu(context),
+      appBar: common.getAppBar(context, 'Main Menu'),
+      body: common.getBackgroundBlurStack(
+        blur: 2.5,
+        alpha: 50,
+        startColor: ThemeColor.getStartColor(context),
+        context,
+        SingleChildScrollView(
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height - kToolbarHeight - 3,
+            child: buildMenu(context),
+          ),
         ),
       ),
     );

@@ -39,6 +39,10 @@ flutter_icons:
   remove_alpha_ios: true
 
 flutter:
+  assets:
+    - assets/icon/SudokuIcon.png
+    - assets/img/sudoku-bg-dark.png
+    - assets/img/sudoku-bg-lite.png
   fonts:
     - family: "Montserrat"
       fonts:

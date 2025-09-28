@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
+import 'common.dart' as common;
 import 'spacing.dart';
+
 import '../theme/colors.dart';
 import '../theme/text.dart';
 
@@ -205,11 +208,15 @@ class IconOption extends StatelessWidget {
       breakpoint: 300.0, // small breakpoint for switch
       label: name,
       helpText: helpText,
-      child: IconButton(
-        icon: toggleCondition ? iconToggle.keys.first : iconToggle.keys.last,
+      child: common.FrostedTooltipIconButton(
+        alpha: 150,
+        borderRadius: 100,
+        borderWidth: 2,
+        accentColor: ThemeColor.getOptionAccentColor(context),
+        startColor: ThemeColor.getIconButtonColor(context),
+        icon: toggleCondition ? iconToggle.keys.first.icon! : iconToggle.keys.last.icon!,
+        label: toggleCondition ? iconToggle.values.first : iconToggle.values.last,
         onPressed: onPressed,
-        tooltip: toggleCondition ? iconToggle.values.first : iconToggle.values.last,
-        iconSize: ThemeStyle.option(context).fontSize! * 1.25,
       ),
     );
   }
@@ -236,6 +243,9 @@ class SwitchOption extends StatelessWidget {
       label: label,
       helpText: helpText,
       child: Switch(
+        // The "oval" piece of the switch
+        activeTrackColor: ThemeColor.getSwitchTrackOnColor(context),
+        inactiveTrackColor: ThemeColor.getSwitchTrackOffColor(context),
         value: value,
         onChanged: onChanged,
         activeColor: ThemeColor.getAccentColor(context),

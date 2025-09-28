@@ -4,7 +4,7 @@ import 'colors.dart';
 abstract class ThemeStyle {
   static const String mainFontFamily = 'Inter';
   static const String gridFontFamily = 'Montserrat';
-  static const double gridNormalBorder = 0.0;
+  static const double gridNormalBorder = 1.0;
   static const double gridThickBorder = 3.0;
 
   /// breakpoints by screen size
@@ -33,12 +33,8 @@ abstract class ThemeStyle {
       return initialFactor * 0.8;
     } else if (screenSize < bpMD) {
       return initialFactor;
-    } else if (screenSize < bpLG) {
-      return initialFactor * 1.05;
-    } else if (screenSize < bpXL) {
-      return initialFactor * 1.1;
     } else {
-      return initialFactor * 1.2;
+      return initialFactor * 1.05;
     }
   }
 
@@ -59,6 +55,7 @@ abstract class ThemeStyle {
       color: ThemeColor.getTextBodyColor(context),
       fontSize: getFontSize(context, 1.25, fontSizeXL),
       height: 1.5,
+      letterSpacing: 2.0,
       fontVariations: [FontVariation('wght', 700)],
     );
   }
@@ -69,7 +66,8 @@ abstract class ThemeStyle {
       color: ThemeColor.getTextBodyColor(context),
       fontSize: getFontSize(context, 1.0, fontSizeLG),
       height: 1.5,
-      fontVariations: [FontVariation('wght', 300)],
+      letterSpacing: 2.0,
+      fontVariations: [FontVariation('wght', 700)],
     );
   }
 
@@ -109,7 +107,7 @@ abstract class ThemeStyle {
       color: ThemeColor.getTextBodyColor(context),
       fontSize: 20,
       height: 1.0,
-      fontVariations: [FontVariation('wght', 400)],
+      fontVariations: [FontVariation('wght', 700)],
     );
   }
 
@@ -118,9 +116,9 @@ abstract class ThemeStyle {
     return TextStyle(
       fontFamily: mainFontFamily,
       color: ThemeColor.getTextBodyColor(context),
-      fontSize: 18,
+      fontSize: 16,
       height: 1.0,
-      fontVariations: [FontVariation('wght', 200)],
+      fontVariations: [FontVariation('wght', 400)],
       fontStyle: FontStyle.italic,
     );
   }
@@ -135,13 +133,32 @@ abstract class ThemeStyle {
     );
   }
 
-  static TextStyle buttonText(BuildContext context) {
+  static TextStyle badgeCount(BuildContext context) {
+    return TextStyle(
+      fontFamily: gridFontFamily,
+      // color is ignored by Badge.count; it's set separately.
+      fontSize: getFontSize(context, 0.75, fontSizeXS),
+      fontVariations: [FontVariation('wght', 500)],
+    );
+  }
+
+  static TextStyle largeButtonText(BuildContext context) {
     return TextStyle(
       fontFamily: mainFontFamily,
       color: ThemeColor.getTextBodyColor(context),
       fontSize: getFontSize(context, 1.0, fontSizeSM),
       height: 1,
       fontVariations: [FontVariation('wght', 900)],
+    );
+  }
+
+  static TextStyle mediumButtonText(BuildContext context) {
+    return TextStyle(
+      fontFamily: mainFontFamily,
+      color: ThemeColor.getTextBodyColor(context),
+      fontSize: getFontSize(context, 0.9, fontSizeSM),
+      height: 1,
+      fontVariations: [FontVariation('wght', 500)],
     );
   }
 
@@ -158,9 +175,9 @@ abstract class ThemeStyle {
   static TextStyle candidateText(BuildContext context) {
     return TextStyle(
       fontFamily: gridFontFamily,
-      fontSize: getFontSize(context, 0.75, fontSizeXS),
+      fontSize: getFontSize(context, 0.8, fontSizeXS),
       color: ThemeColor.getTextBodyColor(context),
-      fontVariations: [FontVariation('wght', 400)],
+      fontVariations: [FontVariation('wght', 500)],
     );
   }
 
@@ -170,7 +187,7 @@ abstract class ThemeStyle {
       fontFamily: gridFontFamily,
       color: ThemeColor.getTextFixedColor(context),
       fontSize: getFontSize(context, 1.2, fontSizeMD),
-      fontVariations: [FontVariation('wght', 300)],
+      fontVariations: [FontVariation('wght', 400)],
     );
   }
 
@@ -180,7 +197,7 @@ abstract class ThemeStyle {
       fontFamily: gridFontFamily,
       color: ThemeColor.getTextGridColor(context),
       fontSize: getFontSize(context, 1.2, fontSizeMD),
-      fontVariations: [FontVariation('wght', 500)],
+      fontVariations: [FontVariation('wght', 700)],
     );
   }
 
@@ -204,27 +221,19 @@ abstract class ThemeStyle {
         foregroundColor: color,
         backgroundColor: buttonColor,
         shadowColor: ThemeColor.getBoxShadowColor(context),
-        textStyle: buttonText(context),
+        textStyle: largeButtonText(context),
         padding: EdgeInsets.all(20),
         side: BorderSide(color: color),
       ),
     );
   }
 
-  static TextButtonThemeData candidateButtonThemeData(BuildContext context, bool isCandidateMode) {
+  static TextButtonThemeData candidateButtonThemeData(BuildContext context) {
     return TextButtonThemeData(
       style: TextButton.styleFrom(
-        backgroundColor:
-            isCandidateMode
-                ? ThemeColor.getAccentColor(context)
-                : ThemeColor.getCellAccentColor(context),
         foregroundColor: ThemeColor.getTextBodyColor(context),
-        textStyle: buttonText(context),
+        textStyle: largeButtonText(context),
         padding: EdgeInsets.all(20),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(0.0),
-          side: BorderSide(color: ThemeColor.getBorderColor(context)),
-        ),
       ),
     );
   }
@@ -233,7 +242,7 @@ abstract class ThemeStyle {
     // scale using screen width
     double screenWidth = MediaQuery.of(context).size.width;
     double factor = 1;
-    double iconSize = 40.0 * getTextFactor(screenWidth, factor);
+    double iconSize = 30.0 * getTextFactor(screenWidth, factor);
 
     return IconButtonThemeData(
       style: IconButton.styleFrom(
