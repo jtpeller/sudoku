@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class ThemeValues {
   ////////////////////////////////////
   ///   FROSTED GLASS PARAMETERS   ///
@@ -39,7 +41,16 @@ class ThemeValues {
   static const double spacingSuperSpacy = 12.0;
 
   /// Aspect Ratios
-  static const double numberButtonRatio = 2.0;
   static const double gridBoxRatio = 1.1;
   static const double squareRatio = 1.0;
+
+  /// Number Button Ratio has to be based on screen size
+  static double getNumberButtonRatio(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    if (width < 500) {
+      return 1.5;
+    } else {
+      return 2.0;
+    }
+  }
 }

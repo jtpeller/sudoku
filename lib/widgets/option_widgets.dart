@@ -248,7 +248,7 @@ class SwitchOption extends StatelessWidget {
         inactiveTrackColor: ThemeColor.getSwitchTrackOffColor(context),
         value: value,
         onChanged: onChanged,
-        activeColor: ThemeColor.getAccentColor(context),
+        activeThumbColor: ThemeColor.getAccentColor(context),
       ),
     );
   }

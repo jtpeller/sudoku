@@ -679,9 +679,9 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
             constraints: BoxConstraints(minWidth: minWidth, maxWidth: containerSize),
             child: GridView.count(
               crossAxisCount: 5, // 5 buttons per row
-              crossAxisSpacing: ThemeValues.spacingSpacy,
-              mainAxisSpacing: ThemeValues.spacingSpacy,
-              childAspectRatio: ThemeValues.numberButtonRatio,
+              crossAxisSpacing: ThemeValues.spacingMid,
+              mainAxisSpacing: ThemeValues.spacingMid,
+              childAspectRatio: ThemeValues.getNumberButtonRatio(context),
               padding: const EdgeInsets.all(0.0),
               shrinkWrap: true, // Shrink to fit the content
               physics: NeverScrollableScrollPhysics(), // Disable scrolling
