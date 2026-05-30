@@ -1,6 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import '../theme/colors.dart';
-import '../theme/text.dart';
+import 'package:sudoku/theme/colors.dart';
+import 'package:sudoku/theme/text.dart';
 
 enum BorderPicker { top, left, right, bottom }
 
@@ -95,7 +97,11 @@ class SudokuTile extends StatelessWidget {
   final int row;
   final int col;
   final int value;
+  final int maxNumber;
   final Set<int> candidates;
+  final int boxRows;
+  final int boxCols;
+  final Color bgColor;
   final bool isSelected;
   final bool isFixed;
   final bool isIncorrect;
@@ -107,11 +113,19 @@ class SudokuTile extends StatelessWidget {
   final VoidCallback onTap;
   final int alpha;
 
+  bool get thickTop => (row % boxRows == 0);
+  bool get thickBottom => ((row + 1) % boxRows == 0) || (row == (boxRows * boxCols) - 1);
+  bool get thickLeft => (col % boxCols == 0);
+  bool get thickRight => ((col + 1) % boxCols == 0) || (col == (boxRows * boxCols) - 1);
+
   const SudokuTile({
     super.key,
     required this.row,
     required this.col,
     required this.value,
+    required this.maxNumber,
+    required this.boxRows,
+    required this.boxCols,
     required this.candidates,
     required this.isSelected,
     required this.isFixed,
@@ -120,6 +134,7 @@ class SudokuTile extends StatelessWidget {
     required this.isHinted,
     required this.isValueSelected,
     required this.isHighlighted,
+    required this.bgColor,
     required this.showCorrect,
     required this.onTap,
     required this.alpha,
@@ -127,20 +142,32 @@ class SudokuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // first, get the default background color based on the row and column
-    Color backgroundColor = _getDefaultBackgroundColor(context, row, col);
+    // Get the default background color based on the row and column
+    Color backgroundColor = bgColor;
 
-    // these override the default background color
+    // These override the default background color
     if (isSelected) {
       backgroundColor = ThemeColor.getAccentColor(context);
     } else if (isValueSelected) {
       backgroundColor = ThemeColor.getCellValueSelectedColor(context);
-    } else if (isHighlighted) {
-      backgroundColor = ThemeColor.getCellHighlightColor(context);
     } else if (isHinted) {
       backgroundColor = ThemeColor.getCellHintColor(context);
+    } else if (isHighlighted) {
+      backgroundColor = ThemeColor.getCellHighlightColor(context);
     }
     backgroundColor = backgroundColor.withAlpha(alpha);
+
+    // Handle the borders
+    var normalBorder = BorderSide(
+      color: ThemeColor.getBorderColor(context),
+      width: ThemeStyle.gridNormalBorder,
+      style: BorderStyle.solid,
+    );
+    var thickBorder = BorderSide(
+      color: ThemeColor.getBorderColor(context),
+      width: ThemeStyle.gridThickBorder,
+      style: BorderStyle.solid,
+    );
 
     return GestureDetector(
       onTap: onTap,
@@ -150,10 +177,10 @@ class SudokuTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: backgroundColor,
           border: Border(
-            top: _getBorderSide(row, col, context, BorderPicker.top),
-            left: _getBorderSide(row, col, context, BorderPicker.left),
-            right: _getBorderSide(row, col, context, BorderPicker.right),
-            bottom: _getBorderSide(row, col, context, BorderPicker.bottom),
+            top: thickTop ? thickBorder : normalBorder,
+            left: thickLeft ? thickBorder : normalBorder,
+            right: thickRight ? thickBorder : normalBorder,
+            bottom: thickBottom ? thickBorder : normalBorder,
           ),
           boxShadow: [
             BoxShadow(
@@ -195,13 +222,13 @@ class SudokuTile extends StatelessWidget {
       return GridView.count(
         mainAxisSpacing: 0,
         crossAxisSpacing: 0,
-        crossAxisCount: 3,
-        childAspectRatio: 1.1,
+        crossAxisCount: (sqrt(maxNumber)).ceil(),
+        childAspectRatio: sqrt(maxNumber).floor() / sqrt(maxNumber).ceil() + 0.05,
         shrinkWrap: true,
         physics: NeverScrollableScrollPhysics(),
         padding: const EdgeInsets.all(0.0),
 
-        children: List.generate(9, (index) {
+        children: List.generate(maxNumber, (index) {
           final candidateNumber = index + 1;
           return Center(
             child: Text(
@@ -215,28 +242,5 @@ class SudokuTile extends StatelessWidget {
       // Empty tile
       return Container();
     }
-  }
-
-  Color _getDefaultBackgroundColor(BuildContext context, int row, int col) {
-    // alternate by 3x3 grids
-    return ((row ~/ 3) + (col ~/ 3)) % 2 == 0
-        ? ThemeColor.getCellBgColor(context)
-        : ThemeColor.getCellAccentColor(context);
-  }
-
-  BorderSide _getBorderSide(int row, int col, BuildContext context, BorderPicker side) {
-    double width = ThemeStyle.gridNormalBorder;
-    // if this is an edge of the 3x3 block, use a thicker border
-    if ((col > 0 && col % 3 == 0 && side == BorderPicker.left) ||
-        (row > 0 && row % 3 == 0 && side == BorderPicker.top) ||
-        (col < 8 && col % 3 == 2 && side == BorderPicker.right) ||
-        (row < 8 && row % 3 == 2 && side == BorderPicker.bottom)) {
-      width = ThemeStyle.gridThickBorder;
-    }
-    return BorderSide(
-      color: ThemeColor.getBorderColor(context),
-      width: width,
-      style: BorderStyle.solid,
-    );
   }
 }

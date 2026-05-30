@@ -4,19 +4,29 @@ import 'package:provider/provider.dart';
 import 'pages/splash.dart';
 import 'theme/colors.dart';
 import 'data/settings_manager.dart';
+import 'data/game_storage.dart';
 
-void main() {
-  runApp(const SudokuApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final settingsManager = SettingsManager();
+  final data = await GameStorage.loadSettings();
+  if (data != null) {
+    settingsManager.loadFromMap(data);
+  }
+
+  runApp(SudokuApp(settingsManager: settingsManager));
 }
 
 class SudokuApp extends StatelessWidget {
-  const SudokuApp({super.key});
+  final SettingsManager settingsManager;
+  const SudokuApp({super.key, required this.settingsManager});
 
-  // application root
+  // Application root
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => SettingsManager(),
+    return ChangeNotifierProvider.value(
+      value: settingsManager,
       child: Consumer<SettingsManager>(
         builder: (context, settingsManager, child) {
           return MaterialApp(
@@ -37,7 +47,6 @@ class SudokuApp extends StatelessWidget {
               textTheme: TextTheme(
                 bodyLarge: TextStyle(color: ThemeColor.textBodyLite),
                 bodyMedium: TextStyle(color: ThemeColor.textBodyLite),
-                // Add more text styles if needed
               ),
             ),
             darkTheme: ThemeData(
@@ -54,7 +63,6 @@ class SudokuApp extends StatelessWidget {
               textTheme: TextTheme(
                 bodyLarge: TextStyle(color: ThemeColor.textBodyDark),
                 bodyMedium: TextStyle(color: ThemeColor.textBodyDark),
-                // Add more text styles if needed
               ),
             ),
             home: SudokuSplash(),

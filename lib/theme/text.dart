@@ -105,8 +105,8 @@ abstract class ThemeStyle {
     return TextStyle(
       fontFamily: mainFontFamily,
       color: ThemeColor.getTextBodyColor(context),
-      fontSize: 20,
-      height: 1.0,
+      fontSize: getFontSize(context, 1.0, 20),
+      height: 1.2,
       fontVariations: [FontVariation('wght', 700)],
     );
   }
@@ -116,8 +116,8 @@ abstract class ThemeStyle {
     return TextStyle(
       fontFamily: mainFontFamily,
       color: ThemeColor.getTextBodyColor(context),
-      fontSize: 16,
-      height: 1.0,
+      fontSize: getFontSize(context, 1.0, 16),
+      height: 1.2,
       fontVariations: [FontVariation('wght', 400)],
       fontStyle: FontStyle.italic,
     );
@@ -210,7 +210,8 @@ abstract class ThemeStyle {
   ///        THEME DATA         ///
   /////////////////////////////////
 
-  static OutlinedButtonThemeData menuButtonThemeData(BuildContext context, String diff) {
+  /// Retrieves the theme data for the corresponding difficulty defined by [diff].
+  static OutlinedButtonThemeData difficultyButtonThemeData(BuildContext context, String diff) {
     Color color = ThemeColor.getMenuButtonColor(context, diff);
     int factor = Theme.of(context).brightness == Brightness.dark ? 16 : 8;
     Color buttonColor = color.withAlpha(255 ~/ factor);
@@ -228,6 +229,7 @@ abstract class ThemeStyle {
     );
   }
 
+  /// Defines the theme data for candidate buttons.
   static TextButtonThemeData candidateButtonThemeData(BuildContext context) {
     return TextButtonThemeData(
       style: TextButton.styleFrom(
@@ -238,6 +240,7 @@ abstract class ThemeStyle {
     );
   }
 
+  /// Defines the theme data for icon buttons.
   static IconButtonThemeData iconButtonThemeData(BuildContext context) {
     // scale using screen width
     double screenWidth = MediaQuery.of(context).size.width;

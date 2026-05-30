@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../theme/colors.dart';
-import '../theme/text.dart';
+import 'package:sudoku/theme/colors.dart';
+import 'package:sudoku/theme/text.dart';
 
 import 'frosted_glass.dart';
 
@@ -13,7 +13,7 @@ String getBgImagePath(ThemeMode darkmode) {
 
 AppBar getAppBar(BuildContext context, String title) {
   return AppBar(
-    title: Text(title),
+    title: Text(title, style: ThemeStyle.subtitle(context)),
     backgroundColor: ThemeColor.getAppBarColor(context),
     centerTitle: true,
   );

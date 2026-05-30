@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 /// Enum to represent Timer status
 enum StopwatchStatus { stopped, running, paused, completed, invalid }
 
-/// Timer
-/// -----
 /// A simple widget that can count up or down infinitely
 ///
 /// Can be paused / resumed, reset, and set.
@@ -59,46 +58,50 @@ class Stopwatch extends StatefulWidget {
 }
 
 class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
-  late AnimationController _controller;
+  late Ticker _ticker;
+  Duration _baseTime = Duration.zero;
+  Duration _sessionTime = Duration.zero;
   StopwatchStatus _timerStatus = StopwatchStatus.stopped;
 
+  /// The status of this stopwatch.
   StopwatchStatus get timerStatus => _timerStatus;
 
-  String get time {
-    return parse(elapsed);
-  }
+  String get time => parse(currentDuration);
 
-  Duration get elapsed {
-    if (_controller.isDismissed) {
-      return Duration(seconds: 0);
-    } else {
-      return _controller.duration! * _controller.value;
+  /// Returns the Duration value that has elapsed.
+  Duration get currentDuration {
+    if (widget.countUp) {
+      return _baseTime + _sessionTime;
     }
+
+    Duration remaining = _baseTime - _sessionTime;
+    return remaining.isNegative ? Duration.zero : remaining;
   }
 
+  /// Retrieves the current value of the timer.
+  double get value => currentDuration.inMicroseconds / 1000000.0;
+
+  /// Set the current elapsed seconds to the [seconds] provided.
   void setSeconds(double seconds) {
     widget.manager.elapsedSeconds = seconds;
-    _controller.value = widget.manager.elapsedSeconds;
+    _baseTime = Duration(microseconds: (seconds * 1000000).toInt());
+    _sessionTime = Duration.zero;
+    if (_ticker.isActive) _ticker.stop();
+    setState(() {});
   }
 
+  /// Set the current elapsed seconds to the [time] provided.
   void setNewTime(DateTime time) {
     if (widget.manager.elapsedSeconds == 0.0) {
-      DateTime now = DateTime.now();
-      widget.manager.elapsedSeconds = now.difference(time).inSeconds.toDouble();
-      _controller.value = widget.manager.elapsedSeconds;
+      setSeconds(DateTime.now().difference(time).inSeconds.toDouble());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Text(
-          time,
-          style: widget.textStyle ?? const TextStyle(fontSize: 16.0, color: Colors.black),
-        );
-      },
+    return Text(
+      time,
+      style: widget.textStyle ?? const TextStyle(fontSize: 16.0, color: Colors.black),
     );
   }
 
@@ -106,35 +109,42 @@ class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    _controller = AnimationController(vsync: this, duration: Duration(days: 365));
-
-    _controller.addStatusListener((status) {
-      switch (status) {
-        case AnimationStatus.forward:
-          _onStart();
-        case AnimationStatus.reverse:
-          _onStart();
-        case AnimationStatus.dismissed:
+    _ticker = createTicker((elapsedTime) {
+      _sessionTime = elapsedTime;
+      setState(() {});
+      if (!widget.countUp && currentDuration == Duration.zero) {
+        if (_timerStatus == StopwatchStatus.running) {
           _onComplete();
-        case AnimationStatus.completed:
-          _onComplete();
+          stop();
+        }
       }
     });
 
-    // initialize manager's state
     widget.manager._state = this;
-    widget.manager.elapsedSeconds = widget.startSeconds;
 
-    // begin timer, if auto-start is on.
-    if (widget.autoStart) {
-      start(startSeconds: widget.startSeconds);
+    // If the manager has a saved status (e.g., from a previous state during a rebuild),
+    // restore it. Otherwise, follow the widget's autoStart policy.
+    if (widget.manager._status != null) {
+      _timerStatus = widget.manager._status!;
+      _baseTime = Duration(microseconds: (widget.manager.elapsedSeconds * 1000000).toInt());
+      if (_timerStatus == StopwatchStatus.running) {
+        _resume();
+      }
+    } else {
+      widget.manager.elapsedSeconds = widget.startSeconds;
+      if (widget.autoStart) {
+        start(startSeconds: widget.startSeconds);
+      }
     }
   }
 
   @override
   void dispose() {
-    widget.manager.elapsedSeconds = _controller.value;
-    _controller.dispose();
+    // Store state in manager so it can be restored if the widget is recreated.
+    widget.manager.elapsedSeconds = value;
+    widget.manager._status = _timerStatus;
+    widget.manager._state = null;
+    _ticker.dispose();
     super.dispose();
   }
 
@@ -143,26 +153,14 @@ class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
   /// Does nothing if the timer is already 'running'.
   void start({double? startSeconds}) {
     if (_timerStatus != StopwatchStatus.running) {
-      // reset controller
-      _controller.reset();
+      if (startSeconds != null) {
+        _baseTime = Duration(microseconds: (startSeconds * 1000000).toInt());
+      }
+      _sessionTime = Duration.zero;
       _timerStatus = StopwatchStatus.running;
+      _ticker.start();
 
-      // decide when to start
-      double begin = 0.0;
-      if (startSeconds == null) {
-        begin = widget.countUp ? 0.0 : 1.0;
-      } else {
-        begin = startSeconds;
-      }
-
-      // decide which way to count
-      if (widget.countUp) {
-        _controller.forward(from: begin);
-      } else {
-        _controller.reverse(from: begin);
-      }
-
-      // call the on start
+      // Call the on start
       widget.onStart?.call();
       setState(() {});
     }
@@ -173,9 +171,11 @@ class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
   /// Does nothing if the state is not 'running'.
   void pause() {
     if (_timerStatus == StopwatchStatus.running) {
-      _controller.stop();
+      _baseTime = currentDuration;
+      _sessionTime = Duration.zero;
+      _ticker.stop();
       _timerStatus = StopwatchStatus.paused;
-      widget.manager.elapsedSeconds = _controller.value;
+      widget.manager._status = _timerStatus;
       setState(() {});
     }
   }
@@ -184,22 +184,25 @@ class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
   ///
   /// Does nothing if the state is not 'paused'.
   void resume() {
-    if (_timerStatus == StopwatchStatus.paused) {
+    // Allow resuming from paused or stopped (which happens after a reset during game load)
+    if (_timerStatus == StopwatchStatus.paused ||
+        _timerStatus == StopwatchStatus.stopped) {
       _timerStatus = StopwatchStatus.running;
-      double restore = widget.manager.elapsedSeconds.toDouble();
-      if (widget.countUp) {
-        _controller.forward(from: restore);
-      } else {
-        _controller.reverse(from: restore);
-      }
+      widget.manager._status = _timerStatus;
+      _resume();
       setState(() {});
     }
   }
 
+  void _resume() {
+    _ticker.start();
+  }
+
   /// Stop the timer, putting it in a stopped state.
   void stop() {
-    _controller.stop();
-    _controller.reset();
+    _ticker.stop();
+    _baseTime = Duration.zero;
+    _sessionTime = Duration.zero;
     _timerStatus = StopwatchStatus.stopped;
     setState(() {});
   }
@@ -231,17 +234,13 @@ class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
         .replaceAll(':', delimiter);
   }
 
-  void _onStart() {
-    if (widget.onStart != null) widget.onStart!();
-  }
-
   void _onComplete() {
     if (widget.onComplete != null) widget.onComplete!();
   }
 
   /// Get time from the timer
   String getTime() {
-    return parse(elapsed, delimiter: widget.delimiter);
+    return parse(currentDuration, delimiter: widget.delimiter);
   }
 }
 
@@ -249,6 +248,7 @@ class _StopwatchState extends State<Stopwatch> with TickerProviderStateMixin {
 /// without having to have access to the Timer widget itself.
 class StopwatchManager {
   _StopwatchState? _state;
+  StopwatchStatus? _status;
   late double elapsedSeconds = 0.0;
 
   /// Constructor
@@ -258,6 +258,8 @@ class StopwatchManager {
   void start() {
     if (_state != null) {
       _state!.start();
+    } else {
+      _status = StopwatchStatus.running;
     }
   }
 
@@ -265,6 +267,8 @@ class StopwatchManager {
   void pause() {
     if (_state != null) {
       _state!.pause();
+    } else {
+      _status = StopwatchStatus.paused;
     }
   }
 
@@ -272,6 +276,8 @@ class StopwatchManager {
   void resume() {
     if (_state != null) {
       _state!.resume();
+    } else {
+      _status = StopwatchStatus.running;
     }
   }
 
@@ -279,14 +285,17 @@ class StopwatchManager {
   void stop() {
     if (_state != null) {
       _state!.stop();
+    } else {
+      _status = StopwatchStatus.stopped;
     }
   }
 
   /// Reset the timer, optionally to the provided seconds value
   void reset({double? seconds}) {
     stop();
+    elapsedSeconds = seconds ?? 0.0;
     if (_state != null) {
-      _state!.setSeconds(seconds ?? 0.0);
+      _state!.setSeconds(elapsedSeconds);
     }
   }
 
@@ -334,7 +343,7 @@ class StopwatchManager {
     if (_state != null) {
       return _state!.timerStatus;
     }
-    return null;
+    return _status;
   }
 
   /// retrieves the time
@@ -343,5 +352,13 @@ class StopwatchManager {
       return _state!.time;
     }
     return null;
+  }
+
+  /// Retrieves the current value of the timer.
+  double get currentValue {
+    if (_state != null) {
+      return _state!.value;
+    }
+    return elapsedSeconds;
   }
 }

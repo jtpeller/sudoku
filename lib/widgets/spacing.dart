@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/colors.dart'; 
+import 'package:sudoku/theme/colors.dart'; 
 
 // constant widgets for reuse
 const Widget verticalSpacer = SizedBox(height: 16);

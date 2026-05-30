@@ -48,9 +48,9 @@ class ThemeValues {
   static double getNumberButtonRatio(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
     if (width < 500) {
-      return 1.5;
-    } else {
       return 2.0;
+    } else {
+      return 1.8;
     }
   }
 }

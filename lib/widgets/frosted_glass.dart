@@ -10,6 +10,7 @@ class FrostedGlassBox extends StatelessWidget {
   final Color borderColor;
   final double borderRadius;
   final double borderWidth;
+  final EdgeInsets padding;
 
   const FrostedGlassBox({
     super.key,
@@ -21,6 +22,7 @@ class FrostedGlassBox extends StatelessWidget {
     this.borderColor = Colors.white,
     this.borderRadius = 15.0,
     this.borderWidth = 1.5,
+    this.padding = const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
   });
 
   @override
@@ -30,6 +32,7 @@ class FrostedGlassBox extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: Container(
+          padding: padding,
           decoration: BoxDecoration(
             color: startColor.withAlpha(alpha),
             border: Border.all(color: borderColor.withAlpha(borderAlpha), width: borderWidth),

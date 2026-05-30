@@ -28,12 +28,12 @@ This Sudoku game features:
 - Options submenu, with options that influence appearance and the game.
 - Candidate and normal modes
 - Auto-candidate mode, which fills in valid candidates for you.
+- Timer
+- Stats
 
 The game itself aims to implement:
 
 - Super-auto-candidate mode. This is like auto-candidate mode, except it goes an extra-step to eliminate further (say, highlighting numbers that can clearly be a different value, eliminate numbers since it can only be a certain row/column in another box, etc.)
-- Timer
-- Stats?
 - Achievements for Android and iOS?
 
 ## Installation

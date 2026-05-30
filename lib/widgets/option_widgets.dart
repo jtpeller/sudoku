@@ -3,25 +3,40 @@ import 'package:flutter/material.dart';
 import 'common.dart' as common;
 import 'spacing.dart';
 
-import '../theme/colors.dart';
-import '../theme/text.dart';
+import 'package:sudoku/theme/colors.dart';
+import 'package:sudoku/theme/text.dart';
 
 // Text with Helper
 class HelperText extends StatelessWidget {
   final String text;
   final String helperText;
+  final IconData? icon;
 
-  const HelperText({super.key, required this.text, required this.helperText});
+  const HelperText({super.key, required this.text, required this.helperText, this.icon});
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      alignment: WrapAlignment.start,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: double.infinity, // never have help text on the same line
-      runSpacing: 16.0, // space between lines if wrapped
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(text, style: ThemeStyle.option(context)),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                color: ThemeColor.getAccentColor(context),
+                size: ThemeStyle.option(context).fontSize,
+              ),
+              const SizedBox(width: 8),
+            ],
+            Flexible(
+              child: Text(text, style: ThemeStyle.option(context)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4.0),
         Text(helperText, style: ThemeStyle.helperText(context)),
       ],
     );
@@ -72,9 +87,11 @@ class ResponsiveRow extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Align(alignment: Alignment.centerLeft, child: left),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Align(alignment: Alignment.centerRight, child: right),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                alignment: Alignment.centerRight,
+                child: right,
               ),
             ],
           );
@@ -107,13 +124,15 @@ class Option extends StatelessWidget {
   final String helpText;
   final Widget child;
   final double breakpoint;
+  final IconData? icon;
 
   const Option({
-    super.key, 
+    super.key,
     required this.label,
     required this.helpText,
     required this.child,
     required this.breakpoint,
+    this.icon,
   });
 
   @override
@@ -122,7 +141,7 @@ class Option extends StatelessWidget {
       children: [
         ResponsiveRow(
           breakpoint: breakpoint, // breakpoint for responsive layout
-          left: HelperText(text: label, helperText: helpText),
+          left: HelperText(text: label, helperText: helpText, icon: icon),
           right: child,
         ),
         verticalSpacer, // space between options
@@ -139,6 +158,7 @@ class DropdownOption<T> extends StatelessWidget {
   final List<T> values;
   final T? currentValue;
   final ValueChanged<T?> onChanged;
+  final IconData? icon;
 
   const DropdownOption({
     super.key,
@@ -148,39 +168,44 @@ class DropdownOption<T> extends StatelessWidget {
     required this.values,
     required this.options,
     required this.onChanged,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Option(
-      breakpoint: 500.0, // large breakpoint bc of dropdown.
+      breakpoint: ThemeStyle.bpSM, // large breakpoint bc of dropdown.
       label: label,
       helpText: helpText,
-      child: DropdownButton<T>(
-        value: currentValue,
-        onChanged: onChanged,
-        items:
-            values.map((T value) {
-              int vIdx = values.indexOf(value);
-              return DropdownMenuItem<T>(value: value, child: Center(child: Text(options[vIdx])));
-            }).toList(),
-        hint: Text('Select $label'),
-        style: ThemeStyle.option(context),
-        dropdownColor: ThemeColor.getAccentColor(context),
-        isExpanded: false,
-        padding: EdgeInsets.all(2.0),
-        underline: Container(height: 1.0, color: ThemeColor.getTextBodyColor(context)),
-        // modify to make it more appealing and compact
-        alignment: Alignment.center,
-        icon: Icon(Icons.arrow_drop_down_rounded, color: ThemeColor.getTextBodyColor(context)),
-        // icon size should be based on the text size
-        iconSize: ThemeStyle.option(context).fontSize! * 1.0,
-        borderRadius: BorderRadius.circular(4.0),
-        selectedItemBuilder: (BuildContext context) {
-          return options.map((String option) {
-            return Center(child: Text(option, style: ThemeStyle.option(context)));
-          }).toList();
-        },
+      icon: icon,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 250),
+        child: DropdownButton<T>(
+          value: currentValue,
+          onChanged: onChanged,
+          items:
+              values.map((T value) {
+                int vIdx = values.indexOf(value);
+                return DropdownMenuItem<T>(value: value, child: Center(child: Text(options[vIdx])));
+              }).toList(),
+          hint: Text('Select $label'),
+          style: ThemeStyle.option(context),
+          dropdownColor: ThemeColor.getAccentColor(context),
+          isExpanded: true,
+          padding: EdgeInsets.all(2.0),
+          underline: Container(height: 1.0, color: ThemeColor.getTextBodyColor(context)),
+          // modify to make it more appealing and compact
+          alignment: Alignment.center,
+          icon: Icon(Icons.arrow_drop_down_rounded, color: ThemeColor.getTextBodyColor(context)),
+          // icon size should be based on the text size
+          iconSize: ThemeStyle.option(context).fontSize! * 1.0,
+          borderRadius: BorderRadius.circular(4.0),
+          selectedItemBuilder: (BuildContext context) {
+            return options.map((String option) {
+              return Center(child: Text(option, style: ThemeStyle.option(context)));
+            }).toList();
+          },
+        ),
       ),
     );
   }
@@ -192,6 +217,7 @@ class IconOption extends StatelessWidget {
   final String name;
   final bool toggleCondition;
   final VoidCallback onPressed;
+  final IconData? icon;
 
   const IconOption({
     super.key,
@@ -200,14 +226,16 @@ class IconOption extends StatelessWidget {
     required this.name,
     required this.toggleCondition,
     required this.onPressed,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Option(
-      breakpoint: 300.0, // small breakpoint for switch
+      breakpoint: ThemeStyle.bpXS, // small breakpoint for switch
       label: name,
       helpText: helpText,
+      icon: icon,
       child: common.FrostedTooltipIconButton(
         alpha: 150,
         borderRadius: 100,
@@ -227,6 +255,7 @@ class SwitchOption extends StatelessWidget {
   final String helpText;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final IconData? icon;
 
   const SwitchOption({
     super.key,
@@ -234,14 +263,16 @@ class SwitchOption extends StatelessWidget {
     required this.helpText,
     required this.value,
     required this.onChanged,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Option(
-      breakpoint: 300.0, // small breakpoint for switch
+      breakpoint: ThemeStyle.bpXS, // small breakpoint for switch
       label: label,
       helpText: helpText,
+      icon: icon,
       child: Switch(
         // The "oval" piece of the switch
         activeTrackColor: ThemeColor.getSwitchTrackOnColor(context),

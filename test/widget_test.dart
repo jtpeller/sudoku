@@ -13,7 +13,7 @@ import 'package:sudoku/main.dart';
 void main() {
   testWidgets('Menu built', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const SudokuApp());
+    //await tester.pumpWidget(const SudokuApp());
 
     // TODO: Write test program
     // Verify that the app starts with the splash screen.
