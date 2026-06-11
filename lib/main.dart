@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'pages/splash.dart';
-import 'theme/colors.dart';
-import 'data/settings_manager.dart';
-import 'data/game_storage.dart';
+import 'features/menu/ui/splash.dart';
+import 'core/theme/colors.dart';
+import 'features/settings/logic/settings_manager.dart';
+import 'core/storage/game_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
