@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:sudoku/core/storage/game_storage.dart';
 import 'package:sudoku/features/game/logic/generator.dart';
@@ -99,6 +100,12 @@ class SudokuManager {
 
   /// Retrieves the generation progress.
   double get generationProgress => _generationProgress;
+
+  /// Whether the current platform should use a static loading screen.
+  ///
+  /// On Web, heavy computation blocks the UI thread, so an indeterminate 
+  /// loader is often better than a frozen progress bar.
+  bool get useStaticLoading => kIsWeb;
 
   // Constructor does nothing!
   SudokuManager();

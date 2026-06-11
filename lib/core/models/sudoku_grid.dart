@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:isolate';
+import 'package:flutter/foundation.dart' show kIsWeb, compute;
 
 import 'package:sudoku/core/models/grid.dart';
 import 'package:sudoku/features/game/logic/generator.dart';
@@ -153,7 +154,13 @@ class SudokuGrid extends Grid<SudokuCell> {
     emptyGrid.setGenerating(true);
 
     // Generate the puzzle in this grid.
-    SudokuGenerator.generate(emptyGrid, difficulty: difficulty, mode: mode, seed: seed, onProgress: onProgress);
+    SudokuGenerator.generate(
+      emptyGrid,
+      difficulty: difficulty,
+      mode: mode,
+      seed: seed,
+      onProgress: onProgress,
+    );
 
     // Return this grid.
     emptyGrid.setGenerating(false);
@@ -168,10 +175,22 @@ class SudokuGrid extends Grid<SudokuCell> {
     int? seed,
     void Function(double)? onProgress,
   }) async {
+    if (kIsWeb) {
+      // compute() spins up a Web Worker on web, keeping the UI responsive.
+      // Note: compute() does not support intermediate progress callbacks.
+      final result = await compute(_generateWebEntry, {
+        'gridSize': gridSize,
+        'difficulty': difficulty,
+        'mode': mode,
+        'seed': seed,
+      });
+      return SudokuGrid.fromJson(result);
+    }
+
     final receivePort = ReceivePort();
 
     // Using spawn allows the isolate to send multiple messages (progress updates)
-    final isolate = await Isolate.spawn(_generateIsolateEntry, {
+    final _ = await Isolate.spawn(_generateIsolateEntry, {
       'gridSize': gridSize,
       'difficulty': difficulty,
       'mode': mode,
@@ -187,11 +206,22 @@ class SudokuGrid extends Grid<SudokuCell> {
       } else if (message is SudokuGrid) {
         completer.complete(message);
         receivePort.close();
-        isolate.kill();
       }
     });
 
     return completer.future;
+  }
+
+  /// Entry point for the compute() function used on Web.
+  static List<Map<String, dynamic>> _generateWebEntry(Map<String, dynamic> params) {
+    final grid = SudokuGrid.generateGame(
+      gridSize: params['gridSize'],
+      difficulty: params['difficulty'],
+      mode: params['mode'],
+      seed: params['seed'],
+      onProgress: null, // Progress callbacks cannot cross worker boundaries in compute()
+    );
+    return grid.toJson();
   }
 
   static void _generateIsolateEntry(Map<String, dynamic> params) {
@@ -203,7 +233,7 @@ class SudokuGrid extends Grid<SudokuCell> {
       seed: params['seed'],
       onProgress: (p) => port.send(p),
     );
-    port.send(grid);
+    Isolate.exit(port, grid);
   }
 
   /// Defines a new [SudokuGrid] from the provided [source] data.

@@ -953,25 +953,27 @@ class _GamePageState extends State<GamePage> with WidgetsBindingObserver {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(color: Colors.blueAccent),
-              spacing.bigVerticalSpacer,
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 50),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: _mgr.generationProgress,
-                    minHeight: 10,
-                    backgroundColor: Colors.blueAccent.withOpacity(0.1),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+              if (_mgr.useStaticLoading)
+                const CircularProgressIndicator(color: Colors.blueAccent)
+              else ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 50),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: _mgr.generationProgress,
+                      minHeight: 10,
+                      backgroundColor: Colors.blueAccent.withAlpha(ThemeValues.alphaWeak),
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                    ),
                   ),
                 ),
-              ),
-              spacing.smallVerticalSpacer,
-              Text(
-                'Generating... ${(_mgr.generationProgress * 100).toInt()}%',
-                style: ThemeStyle.mediumGameText(context),
-              ),
+                spacing.smallVerticalSpacer,
+                Text(
+                  'Generating... ${(_mgr.generationProgress * 100).toInt()}%',
+                  style: ThemeStyle.mediumGameText(context),
+                ),
+              ],
               spacing.bigVerticalSpacer,
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
