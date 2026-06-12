@@ -215,12 +215,30 @@ abstract class ThemeStyle {
 
   /// Number Button Ratio has to be based on screen size
   static double getNumberButtonRatio(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
-    if (width < bpSM) {
+    return calculateNumberButtonRatio(MediaQuery.of(context).size.width);
+  }
+
+  /// Pure function to calculate the ratio for number buttons based on [width].
+  ///
+  /// This linearizes the transitions between breakpoints to ensure a smooth
+  /// visual "flow" as the screen resizes.
+  static double calculateNumberButtonRatio(double width) {
+    // Ratios based on requirements: XS ~2.0, SM ~2.75, Others ~1.5-1.8.
+    if (width <= bpXS) {
       return 2.0;
+    } else if (width <= bpSM) {
+      return _lerp(width, bpXS, bpSM, 2.0, 2.75);
+    } else if (width <= bpMD) {
+      return _lerp(width, bpSM, bpMD, 2.75, 1.8);
     } else {
-      return 1.8;
+      return _lerp(width, bpMD, bpLG, 1.8, 1.5);
     }
+  }
+
+  /// Helper to linearly interpolate between two values.
+  static double _lerp(double v, double x1, double x2, double y1, double y2) {
+    double t = ((v - x1) / (x2 - x1)).clamp(0.0, 1.0);
+    return y1 + (y2 - y1) * t;
   }
 
   /// Retrieves the theme data for the corresponding difficulty defined by [diff].
